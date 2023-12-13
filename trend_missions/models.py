@@ -7,12 +7,15 @@ class TrendMission(models.Model):
     id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(
         User,
-        verbose_name="팔로우 하는 사용자",
+        verbose_name="사용자",
         on_delete=models.CASCADE,
     )
     trend_id = models.ForeignKey(Trend, verbose_name="trend", on_delete=models.PROTECT)
     is_all_certificated = models.BooleanField(verbose_name="인증 여부", default=False)
     view_count = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return self.user_id.nickname + "의 " + self.trend_id.name + "미션"
 
 
 class Comment(models.Model):
@@ -59,6 +62,9 @@ class UserTrendItem(models.Model):
     is_certificated = models.BooleanField(verbose_name="인증 여부", default=False)
     content = models.CharField(max_length=300, verbose_name="트렌드 아이템 인증 내용")
 
+    def __str__(self):
+        return self.user_id.nickname + "의 " + self.trend_item_id.name
+
 
 class Stamp(models.Model):
     id = models.AutoField(primary_key=True)
@@ -72,3 +78,6 @@ class Stamp(models.Model):
         verbose_name="트렌드 미션 아이디",
         on_delete=models.PROTECT,
     )
+
+    def __str__(self):
+        return self.user_id.nickname + "의 " + self.trend_mission_id.trend_id.name + "스탬프"
