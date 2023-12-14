@@ -63,7 +63,7 @@ class UserTrendItem(models.Model):
     content = models.CharField(max_length=300, verbose_name="트렌드 아이템 인증 내용")
 
     def __str__(self):
-        return self.user_id.nickname + "의 " + self.trend_item_id.name
+        return self.user_id.nickname + "의 " + self.trend_mission_id.trend_id.name + " 트렌드 미션의 " + self.trend_item_id.title
 
 
 class Stamp(models.Model):
