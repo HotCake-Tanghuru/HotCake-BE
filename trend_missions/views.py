@@ -42,3 +42,11 @@ class PostTrendMissionView(GenericAPIView):
             result["trend_item_list"] = trend_item_list.values()  # 트렌드 아이템도 담아서 전달
             return Response(result, status=200)
         return Response(serializer.errors)
+    
+class TrendMissionListView(GenericAPIView):
+    # 사용자의 트렌드 미션 리스트 조회
+    def get(self, request, pk):
+        trend_mission = TrendMission.objects.filter(user_id=pk)
+        serializer = TrendMissionsSerializer(trend_mission, many=True)
+        return Response(serializer.data, status=200)
+    
