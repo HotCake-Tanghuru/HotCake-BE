@@ -9,4 +9,5 @@ class PostTrendMissionsSerializer(serializers.ModelSerializer):
 class TrendMissionsSerializer(serializers.ModelSerializer):
   class Meta:
     model = TrendMission
-    fields = '__all__'
+    fields = ['id', 'user_id', 'trend_id', 'is_all_certificated', 'view_count']
+  

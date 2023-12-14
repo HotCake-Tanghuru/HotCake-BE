@@ -12,7 +12,6 @@ from trends.models import TrendItem, Trend
 from accounts.models import User
 
 
-# Create your views here.
 class PostTrendMissionView(GenericAPIView):
     # 트렌드 인증 미션 생성
     def post(self, request):
@@ -50,3 +49,20 @@ class TrendMissionListView(GenericAPIView):
         serializer = TrendMissionsSerializer(trend_mission, many=True)
         return Response(serializer.data, status=200)
     
+
+class TrendMissionDetailView(GenericAPIView):
+    # 트레드 미션 상세 조회
+    def get(self, request, pk):
+
+        # 트렌드 미션 존재 여부 확인
+        if not TrendMission.objects.filter(pk=pk).exists():
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+
+        trend_mission = TrendMission.objects.get(pk=pk)
+        serializer = TrendMissionsSerializer(trend_mission)
+
+        # 트렌드 미션에 해당하는 유저의 트렌드 아이템 리스트 조회
+        user_trend_item_list = UserTrendItem.objects.filter(trend_mission_id=pk)
+        result = serializer.data
+        result["trend_item_list"] = user_trend_item_list.values()
+        return Response(result, status=200)
