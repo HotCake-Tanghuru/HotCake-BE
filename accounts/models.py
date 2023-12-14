@@ -7,15 +7,15 @@ from trends.models import Trend
 class User(AbstractUser):
     id = models.AutoField(primary_key=True)
     nickname = models.CharField(max_length=200, verbose_name="닉네임")
-    name = models.CharField(max_length=100, verbose_name="이름")
     email = models.EmailField(verbose_name="이메일")
     profile_img = models.ImageField(
         upload_to="media/image/profile/", blank=True, null=True, verbose_name="프로필 사진"
     )
-    gender = models.CharField(max_length=10, verbose_name="성별")
-    age_range = models.CharField(max_length=20, verbose_name="연령대")
     bio = models.TextField(blank=True, null=True, verbose_name="자기소개")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성일")
+
+    def __str__(self):
+        return f'{self.nickname}({self.email})'
 
 
 class Follow(models.Model):
