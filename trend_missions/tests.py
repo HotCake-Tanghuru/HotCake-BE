@@ -168,6 +168,7 @@ class TrendMissionDetailAPITestCase(TestCase):
         response = self.client.get(f"/trend-missions/about/-2")
         self.assertEqual(response.status_code, 404)
 
+
 """
 # 트렌드 미션 아이템 업데이트 테스트
     # 트렌드 미션 아이템 업데이트 테스트
@@ -175,3 +176,81 @@ class TrendMissionDetailAPITestCase(TestCase):
     # 직접 테스트로 대체
     
 """
+
+
+class TrendMissionCompleteAPITestCase(TestCase):
+    """트렌드 미션 완료 테스트"""
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = Client()
+        self.user = User.objects.create_user(
+            "testuser", "testemail@test.com", "123456789@"
+        )
+
+        # 테스트를 위한 트렌드 생성
+        self.trend = Trend.objects.create(
+            name="test-trend1",
+        )
+
+        # 테스트를 위한 트렌드 아이템 생성
+        self.trend_item1 = TrendItem.objects.create(
+            title="test-trend-item1",
+            content="test-trend-item-content1",
+            image="test-trend-item-image1",
+        )
+        self.trend_item1.trend_id.set([self.trend])
+
+        self.trend_item2 = TrendItem.objects.create(
+            title="test-trend-item2",
+            content="test-trend-item-content2",
+            image="test-trend-item-image2",
+        )
+        self.trend_item2.trend_id.set([self.trend])
+
+        self.trend_item3 = TrendItem.objects.create(
+            title="test-trend-item3",
+            content="test-trend-item-content3",
+            image="test-trend-item-image3",
+        )
+        self.trend_item3.trend_id.set([self.trend])
+
+        # 사용자 트렌드 미션 생성
+        self.trend_mission = TrendMission.objects.create(
+            user_id=self.user,
+            trend_id=self.trend,
+        )
+
+
+    # 트렌드 미션 완료 성공 테스트
+    def test_TrendMissions_complete(self):
+        # 사용자 트렌드 미션 아이템 생성
+        self.trend_mission_item = UserTrendItem.objects.create(
+            user_id=self.user,
+            trend_mission_id=self.trend_mission,
+            trend_item_id=self.trend_item1,
+            is_certificated=True, # 트렌드 미션 완료 처리
+        )
+
+        response = self.client.patch(
+            f"/trend-missions/{self.trend_mission.id}/complete",
+            {"user_id": self.user.id}, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+    
+    # 트렌드 미션 완료 실패(아직 미션 완료 x) 테스트
+    def test_TrendMissions_complete_fail(self):
+
+        # 사용자 트렌드 미션 아이템 생성
+        self.trend_mission_item = UserTrendItem.objects.create(
+            user_id=self.user,
+            trend_mission_id=self.trend_mission,
+            trend_item_id=self.trend_item1,
+            is_certificated=False, # 아직 모든 인증 완료 x
+        )
+
+        response = self.client.patch(
+            f"/trend-missions/{self.trend_mission.id}/complete",
+            {"user_id": self.user.id}, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 202)
+        
