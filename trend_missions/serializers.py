@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TrendMission
+from .models import TrendMission, Stamp
 
 
 class PostTrendMissionsSerializer(serializers.ModelSerializer):
@@ -18,3 +18,8 @@ class TrendMissionsSerializer(serializers.ModelSerializer):
         instance.is_all_certificated = True
         instance.save()
         return instance
+    
+class StampSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Stamp
+        fields = ["user_id", "trend_id"]
