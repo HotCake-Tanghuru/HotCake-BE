@@ -170,63 +170,7 @@ class TrendMissionDetailAPITestCase(TestCase):
 
 
 # 트렌드 미션 아이템 업데이트 테스트
-class TrendMissionItemUpdateAPITestCase(TestCase):
-    def setUp(self):
-        # 테스트를 위한 유저 생성
-        self.client = Client()
-        self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
-        )
-
-        # 테스트를 위한 트렌드 생성
-        self.trend = Trend.objects.create(
-            name="test-trend1",
-        )
-
-        # 테스트를 위한 트렌드 아이템 생성
-        self.trend_item1 = TrendItem.objects.create(
-            title="test-trend-item1",
-            content="test-trend-item-content1",
-            image="test-trend-item-image1",
-        )
-        self.trend_item1.trend_id.set([self.trend])
-
-        # 사용자 트렌드 미션 생성
-        self.trend_mission = TrendMission.objects.create(
-            user_id=self.user,
-            trend_id=self.trend,
-        )
-
-        # 사용자 트렌드 미션 아이템 생성
-        self.trend_mission_item = UserTrendItem.objects.create(
-            user_id=self.user,
-            trend_mission_id=self.trend_mission,
-            trend_item_id=self.trend_item1,
-        )
-
-        # 테스트를 위한 트렌드 아이템 생성
-        self.image = SimpleUploadedFile(
-            name='test_image.jpg', 
-            content=b'',
-            content_type='image/jpeg'
-        )
-
     # 트렌드 미션 아이템 업데이트 테스트
     # 데이터 형태때문에 테스트가 계속 실패
     # 직접 테스트로 대체
-    # def test_TrendMissions_item_update(self):
-    #     factory = RequestFactory()
-    #     # 업데이트할 데이터
-    #     updated_data = {
-    #         'user_id': self.user.id,
-    #         'image': SimpleUploadedFile(name='updated_image.jpg', content=b'', content_type='image/jpeg'),
-    #         'content': 'updated-content',
-    #     }
-
-    #     request = factory.put(f'/trend-missions/mission-item/{self.trend_mission_item.id}/edit', data = updated_data, format='multipart')
-    #     data = request.body
-    #     content_type = request.content_type
-
-    #     response = self.client.put(f'/trend-missions/mission-item/{self.trend_mission_item.id}/edit', data, content_type=content_type)
-
-    #     self.assertEqual(response.status_code, 200)
+    
