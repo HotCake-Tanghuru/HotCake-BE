@@ -70,7 +70,7 @@ class Stamp(models.Model):
     id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(
         User,
-        verbose_name="팔로우 하는 사용자",
+        verbose_name="스탬프 소유자",
         on_delete=models.CASCADE,
     )
     trend_mission_id = models.ForeignKey(

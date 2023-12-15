@@ -7,7 +7,7 @@ from rest_framework.generics import CreateAPIView, GenericAPIView
 from .serializers import PostTrendMissionsSerializer, TrendMissionsSerializer
 
 # models
-from .models import TrendMission, UserTrendItem
+from .models import TrendMission, UserTrendItem, Stamp
 from trends.models import TrendItem, Trend
 from accounts.models import User
 
@@ -66,3 +66,38 @@ class TrendMissionDetailView(GenericAPIView):
         result = serializer.data
         result["trend_item_list"] = user_trend_item_list.values()
         return Response(result, status=200)
+    
+
+class CheckMissionCompleteView(GenericAPIView):
+    def patch(self, request, pk):
+        # 트렌드 미션 존재 여부 확인
+        if not TrendMission.objects.filter(pk=pk).exists():
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+
+        trend_mission = TrendMission.objects.get(pk=pk)
+        user_id = request.data["user_id"]
+        user_id = User.objects.get(pk=user_id)
+        
+        # 해당하는 트렌드 미션 아이템 목록 찾기
+        trend_item_list = UserTrendItem.objects.filter(trend_mission=pk, user=user_id)
+        
+        # 모든 미션 완수 여부 확인 (인증 여부 확인)
+        for trend_item in trend_item_list:
+            if trend_item.is_certificated == False:
+                return Response("아직 모든 미션을 완료하지 않았습니다.", status=202)
+
+        # 트렌드 미션 상태값 변경 -> True
+        trend_mission.is_all_certificated = True
+        serializer = TrendMissionsSerializer(trend_mission)
+        serializer.updateComplete(trend_mission)
+
+        # 스탬프 발급
+        if Stamp.objects.filter(user=user_id, trend_mission=trend_mission).exists():
+            return Response("이미 스탬프를 발급받았습니다.", status=404)
+        
+        stamp = Stamp.objects.create(
+            user=user_id,
+            trend_mission=trend_mission,
+        )
+
+        return Response(serializer.data, status=200)
