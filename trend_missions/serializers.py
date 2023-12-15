@@ -1,17 +1,40 @@
 from rest_framework import serializers
-from .models import TrendMission, Stamp
+from .models import TrendMission, UserTrendItem, Stamp
+
 
 
 class PostTrendMissionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrendMission
-        fields = ["user_id", "trend_id"]
+        fields = ["user", "trend"]
+
 
 
 class TrendMissionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrendMission
-        fields = ["id", "user_id", "trend_id", "is_all_certificated", "view_count"]
+        fields = ["id", "user", "trend", "is_all_certificated", "view_count"]
+
+
+class UserTrendItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserTrendItem
+        fields = [
+            "id",
+            "user",
+            "trend_mission",
+            "trend_item",
+            "updated_at",
+            "image",
+            "is_certificated",
+            "content",
+        ]
+
+
+class UserTrendItemUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserTrendItem
+        fields = ["user", "image", "content"]
 
     # is_all_certificated True로 변경
     def updateComplete(self, instance):
@@ -22,4 +45,4 @@ class TrendMissionsSerializer(serializers.ModelSerializer):
 class StampSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stamp
-        fields = ["user_id", "trend_id"]
+        fields = ["user", "trend"]

@@ -5,27 +5,27 @@ from accounts.models import User
 
 class TrendMission(models.Model):
     id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         verbose_name="사용자",
         on_delete=models.CASCADE,
     )
-    trend_id = models.ForeignKey(Trend, verbose_name="trend", on_delete=models.PROTECT)
+    trend = models.ForeignKey(Trend, verbose_name="트렌드", on_delete=models.PROTECT)
     is_all_certificated = models.BooleanField(verbose_name="인증 여부", default=False)
     view_count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return self.user_id.nickname + "의 " + self.trend_id.name + "미션"
+        return self.user.nickname + "의 " + self.trend.name + "미션"
 
 
 class Comment(models.Model):
     id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         verbose_name="사용자",
         on_delete=models.CASCADE,
     )
-    trend_mission_id = models.ForeignKey(
+    trend_mission = models.ForeignKey(
         TrendMission,
         verbose_name="트렌드 미션 아이디",
         on_delete=models.CASCADE,
@@ -40,17 +40,17 @@ class Comment(models.Model):
 
 class UserTrendItem(models.Model):
     id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         verbose_name="사용자",
         on_delete=models.CASCADE,
     )
-    trend_mission_id = models.ForeignKey(
+    trend_mission = models.ForeignKey(
         TrendMission,
         verbose_name="트렌드 미션 아이디",
         on_delete=models.CASCADE,
     )
-    trend_item_id = models.ForeignKey(
+    trend_item = models.ForeignKey(
         TrendItem,
         verbose_name="트렌드 아이템 아이디",
         on_delete=models.CASCADE,
@@ -63,21 +63,21 @@ class UserTrendItem(models.Model):
     content = models.CharField(max_length=300, verbose_name="트렌드 아이템 인증 내용")
 
     def __str__(self):
-        return self.user_id.nickname + "의 " + self.trend_mission_id.trend_id.name + " 트렌드 미션의 " + self.trend_item_id.title
+        return self.user.nickname + "의 " + self.trend_mission.trend.name + " 트렌드 미션의 " + self.trend_item.title
 
 
 class Stamp(models.Model):
     id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         verbose_name="스탬프 소유자",
         on_delete=models.CASCADE,
     )
-    trend_mission_id = models.ForeignKey(
+    trend_mission = models.ForeignKey(
         TrendMission,
         verbose_name="트렌드 미션 아이디",
         on_delete=models.PROTECT,
     )
 
     def __str__(self):
-        return self.user_id.nickname + "의 " + self.trend_mission_id.trend_id.name + "스탬프"
+        return self.user.nickname + "의 " + self.trend_mission.trend.name + "스탬프"
