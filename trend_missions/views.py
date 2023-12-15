@@ -79,7 +79,7 @@ class CheckMissionCompleteView(GenericAPIView):
         user_id = User.objects.get(pk=user_id)
         
         # 해당하는 트렌드 미션 아이템 목록 찾기
-        trend_item_list = UserTrendItem.objects.filter(trend_mission_id=pk, user_id=user_id)
+        trend_item_list = UserTrendItem.objects.filter(trend_mission=pk, user=user_id)
         
         # 모든 미션 완수 여부 확인 (인증 여부 확인)
         for trend_item in trend_item_list:
@@ -92,12 +92,12 @@ class CheckMissionCompleteView(GenericAPIView):
         serializer.updateComplete(trend_mission)
 
         # 스탬프 발급
-        if Stamp.objects.filter(user_id=user_id, trend_mission_id=trend_mission).exists():
+        if Stamp.objects.filter(user=user_id, trend_mission=trend_mission).exists():
             return Response("이미 스탬프를 발급받았습니다.", status=404)
         
         stamp = Stamp.objects.create(
-            user_id=user_id,
-            trend_mission_id=trend_mission,
+            user=user_id,
+            trend_mission=trend_mission,
         )
 
         return Response(serializer.data, status=200)
