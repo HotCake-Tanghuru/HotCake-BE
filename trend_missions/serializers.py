@@ -15,6 +15,12 @@ class TrendMissionsSerializer(serializers.ModelSerializer):
         model = TrendMission
         fields = ["id", "user", "trend", "is_all_certificated", "view_count"]
 
+    # is_all_certificated True로 변경
+    def updateComplete(self, instance):
+        instance.is_all_certificated = True
+        instance.save()
+        return instance
+
 
 class UserTrendItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,11 +42,7 @@ class UserTrendItemUpdateSerializer(serializers.ModelSerializer):
         model = UserTrendItem
         fields = ["user", "image", "content"]
 
-    # is_all_certificated True로 변경
-    def updateComplete(self, instance):
-        instance.is_all_certificated = True
-        instance.save()
-        return instance
+
     
 class StampSerializer(serializers.ModelSerializer):
     class Meta:
