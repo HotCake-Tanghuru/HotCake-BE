@@ -10,7 +10,7 @@ class Trend(models.Model):
 
 class TrendItem(models.Model):
     id = models.AutoField(primary_key=True)
-    trend_id = models.ManyToManyField("Trend", verbose_name="trend_id")
+    trend = models.ManyToManyField(Trend, verbose_name="트렌드")
     title = models.CharField(max_length=100, verbose_name="트렌드 아이템 제목")
     content = models.CharField(max_length=300, verbose_name="트렌드 아이템 내용")
     image = models.ImageField(
