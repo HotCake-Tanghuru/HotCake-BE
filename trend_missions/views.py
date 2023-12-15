@@ -68,7 +68,7 @@ class TrendMissionDetailView(GenericAPIView):
         return Response(result, status=200)
     
 class TrendMissionItemUpdateView(GenericAPIView):
-    def put(self, request, pk):
+    def patch(self, request, pk):
         
         # 트렌드 아이템 소유자 확인
         item = UserTrendItem.objects.get(pk = pk)
