@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from trends.models import Trend
 
 
-# Create your models here.
 class User(AbstractUser):
     id = models.AutoField(primary_key=True)
     nickname = models.CharField(max_length=200, verbose_name="닉네임")
@@ -15,18 +14,18 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성일")
 
     def __str__(self):
-        return f'{self.nickname}({self.email})'
+        return f"{self.nickname}({self.email})"
 
 
 class Follow(models.Model):
     id = models.AutoField(primary_key=True)
-    from_user_id = models.ForeignKey(
+    from_user = models.ForeignKey(
         User,
         verbose_name="팔로우 하는 사용자",
         related_name="from_user",
         on_delete=models.CASCADE,
     )
-    to_user_id = models.ForeignKey(
+    to_user = models.ForeignKey(
         User,
         verbose_name="팔로우 대상 사용자",
         related_name="to_user",
@@ -36,13 +35,11 @@ class Follow(models.Model):
 
 class Like(models.Model):
     id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, verbose_name="사용자 아이디", on_delete=models.CASCADE)
-    trend_id = models.ForeignKey(
-        Trend, verbose_name="트렌드 아이디",
-        related_name="trend",
-        on_delete=models.CASCADE
+    user = models.ForeignKey(User, verbose_name="사용자 아이디", on_delete=models.CASCADE)
+    trend = models.ForeignKey(
+        Trend, verbose_name="트렌드 아이디", related_name="trend", on_delete=models.CASCADE
     )
-    trend_mission_id = models.ForeignKey(
+    trend_mission = models.ForeignKey(
         Trend,
         verbose_name="트렌드 미션 아이디",
         related_name="trend_mission",
