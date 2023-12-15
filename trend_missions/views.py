@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, GenericAPIView
 
 # serializers
-from .serializers import PostTrendMissionsSerializer, TrendMissionsSerializer
+from .serializers import PostTrendMissionsSerializer, TrendMissionsSerializer, UserTrendItemSerializer, UserTrendItemUpdateSerializer
 
 # models
 from .models import TrendMission, UserTrendItem
@@ -66,3 +66,20 @@ class TrendMissionDetailView(GenericAPIView):
         result = serializer.data
         result["trend_item_list"] = user_trend_item_list.values()
         return Response(result, status=200)
+    
+class TrendMissionItemUpdateView(GenericAPIView):
+    def put(self, request, pk):
+        
+        # 트렌드 아이템 소유자 확인
+        item = UserTrendItem.objects.get(pk = pk)
+        user_id = request.data["user_id"]
+        user_id = int(user_id)
+        if item.user_id.id != user_id:
+            return Response("해당 트렌드 아이템의 소유자가 아니라 수정 권한이 없습니다.", status=404)
+        
+        # 트렌드 아이템 수정
+        item.is_certificated = True
+        serializer = UserTrendItemUpdateSerializer(item, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=200)
