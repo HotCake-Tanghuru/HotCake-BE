@@ -4,12 +4,14 @@ import requests
 
 
 from django.shortcuts import redirect
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
+from .serializers import UserSerializer
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -18,7 +20,7 @@ environ.Env.read_env(env_file=BASE_DIR / ".env")
 
 kakao_login_uri = "https://kauth.kakao.com/oauth/authorize"
 kakao_token_uri = "https://kauth.kakao.com/oauth/token"
-kakao_profile_uri = "https://kapi.kakao.com/v2/user/me"
+kakao_user_uri = "https://kapi.kakao.com/v2/user/me"
 
 
 class KakaoLogin(APIView):
@@ -29,13 +31,13 @@ class KakaoLogin(APIView):
         client_id = env("KAKAO_REST_API_KEY")
         redirect_uri = env("KAKAO_REDIRECT_URI")
         uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
-        print(uri)
         res = redirect(uri)
         return res
 
 
-class KakaoCallback(APIView):
+class KakaoCallback(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = UserSerializer
 
     def get(self, request):
         """access_token과 회원정보를 요청"""
@@ -75,17 +77,13 @@ class KakaoCallback(APIView):
             "Authorization": access_token,
             "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
         }
-        user_info_res = requests.post(kakao_profile_uri, headers=auth_headers)
+        user_info_res = requests.post(kakao_user_uri, headers=auth_headers)
         user_info_json = user_info_res.json()
-        # print("=====user_info_json=====")
-        # print(user_info_json)
 
         social_type = "kakao"
-        social_id = user_info_json.get("id")
+        social_id = f"{social_type}_{user_info_json.get('id')}"
 
         kakao_account = user_info_json.get("kakao_account")
-        # print("=====kakao_account=====")
-        # print(kakao_account)
 
         if not kakao_account:
             return Response(
@@ -94,27 +92,37 @@ class KakaoCallback(APIView):
             )
         user_email = kakao_account.get("email")
         profile = kakao_account.get("profile")
-        # print("=====user_profile=====")
-        # print(profile)
 
-        if not profile:
-            return Response(
-                {"message": "카카오 프로필이 없습니다."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         user_nickname = profile.get("nickname")
         user_profile_img = profile.get("profile_image_url")
 
-        res = {
-            "social_type": social_type,
-            "social_id": social_id,
-            "user_email": user_email,
-            "user_nickname": user_nickname,
-            "user_profile_img": user_profile_img,
-        }
-        # print("=====res=====")
-        # print(res)
+        user, created = User.objects.get_or_create(
+            social_id=social_id,
+            defaults={
+                "social_type": social_type,
+                "social_id": social_id,
+                "email": user_email,
+                "nickname": user_nickname,
+                "profile_img": user_profile_img,
+            },
+        )
 
+        # 생성된 경우와 기존 사용자인 경우에 따라 다른 메시지 반환
+        if created:
+            message = "사용자 생성 완료"
+        else:
+            message = "로그인 완료"
+
+        # JWT 토큰 생성
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        res = {
+            "message": message,
+            "user": UserSerializer(user).data,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
         response = Response(res, status=status.HTTP_200_OK)
-        response.data = res
         return response
