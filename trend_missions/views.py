@@ -131,7 +131,29 @@ class CheckMissionCompleteView(GenericAPIView):
 
         return Response(serializer.data, status=200)
 
+class StampDetailView(GenericAPIView):
+    def get(self, request, pk):
+        """스탬프 상세 조회"""
+        # 스탬프 존재 여부 확인
+        if not Stamp.objects.filter(pk=pk).exists():
+            return Response("존재하지 않는 스탬프입니다.", status=404)
+        # 스탬프 데이터 반환
+        stamp = Stamp.objects.get(pk=pk)
+        serializer = StampSerializer(stamp)
+        result = serializer.data
 
+        # 트렌드 미션 데이터 반환
+        trend_mission_id = stamp.trend_mission.id
+        trend_mission = TrendMission.objects.get(pk=trend_mission_id)
+        result["trend_mission"] = TrendMissionsSerializer(trend_mission).data
+
+        # 트렌드 아이템 데이터 반환
+        trend_item_list = UserTrendItem.objects.filter(trend_mission=trend_mission_id)
+        result["trend_item_list"] = UserTrendItemSerializer(
+            trend_item_list, many=True
+        ).data
+        return Response(result, status=200)
+      
 class StampListView(GenericAPIView):
     """스탬프 리스트 조회"""
 

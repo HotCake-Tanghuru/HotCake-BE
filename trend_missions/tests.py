@@ -19,11 +19,9 @@ class CreateTrendMissionAPITestCase(TestCase):
             "testuser", "testemail@test.com", "123456789@"
         )
 
-        # 테스트를 위한 트렌드 생성
-        self.trend = Trend.objects.create(
-            name="test-trend",
-        )
 
+class StampDetailAPITest(TestCase):
+    """스탬프 상세 조회 테스트"""
         # 테스트를 위한 트렌드 아이템 생성
         self.trend_item1 = TrendItem.objects.create(
             title="test-trend-item1",
@@ -118,7 +116,6 @@ class TrendMissionListAPITestCase(TestCase):
 
 class TrendMissionDetailAPITestCase(TestCase):
     """트렌드 미션 상세 조회 테스트"""
-
     def setUp(self):
         # 테스트를 위한 유저 생성
         self.client = Client()
@@ -131,34 +128,28 @@ class TrendMissionDetailAPITestCase(TestCase):
             name="test-trend1",
         )
 
-        # 테스트를 위한 트렌드 아이템 생성
-        self.trend_item1 = TrendItem.objects.create(
-            title="test-trend-item1",
-            content="test-trend-item-content1",
-            image="test-trend-item-image1",
-        )
-        self.trend_item1.trend.set([self.trend])
-
-        self.trend_item2 = TrendItem.objects.create(
-            title="test-trend-item2",
-            content="test-trend-item-content2",
-            image="test-trend-item-image2",
-        )
-        self.trend_item2.trend.set([self.trend])
-
-        self.trend_item3 = TrendItem.objects.create(
-            title="test-trend-item3",
-            content="test-trend-item-content3",
-            image="test-trend-item-image3",
-        )
-        self.trend_item3.trend.set([self.trend])
-
         # 사용자 트렌드 미션 생성
         self.trend_mission = TrendMission.objects.create(
             user=self.user,
             trend=self.trend,
         )
 
+
+        # 스탬프 생성
+        self.stamp = Stamp.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+        )
+
+    # 스탬프 상세 조회 성공 테스트
+    def test_StampDetail(self):
+        response = self.client.get(f"/trend-missions/users/stamp/{self.user.id}")
+        self.assertEqual(response.status_code, 200)
+
+    # 스탬프 리스트 조회 실패 테스트
+    def test_StampList_fail(self):
+        response = self.client.get(f"/trend-missions/users/stamp/-2")
+        self.assertEqual(response.status_code, 404)
     # 트렌드 미션 상세 조회 성공 테스트
     def test_TrendMissions_detail(self):
         response = self.client.get(f"/trend-missions/about/{self.trend_mission.id}")
@@ -292,4 +283,41 @@ class StampListAPITestCase(TestCase):
     # 스탬프 리스트 조회 실패 테스트
     def test_StampList_fail(self):
         response = self.client.get(f"/trend-missions/users/-2/stamp")
+        self.assertEqual(response.status_code, 404)
+        
+        
+class StampDetailAPITest(TestCase):
+    """스탬프 상세 조회 테스트"""
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = Client()
+        self.user = User.objects.create_user(
+            "testuser", "testemail@test.com", "123456789@"
+        )
+
+        # 테스트를 위한 트렌드 생성
+        self.trend = Trend.objects.create(
+            name="test-trend1",
+        )
+
+        # 사용자 트렌드 미션 생성
+        self.trend_mission = TrendMission.objects.create(
+            user=self.user,
+            trend=self.trend,
+        )
+
+        # 스탬프 생성
+        self.stamp = Stamp.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+        )
+
+    # 스탬프 상세 조회 성공 테스트
+    def test_StampDetail(self):
+        response = self.client.get(f"/trend-missions/users/stamp/{self.user.id}")
+        self.assertEqual(response.status_code, 200)
+
+    # 스탬프 리스트 조회 실패 테스트
+    def test_StampList_fail(self):
+        response = self.client.get(f"/trend-missions/users/stamp/-2")
         self.assertEqual(response.status_code, 404)
