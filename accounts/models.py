@@ -78,6 +78,9 @@ class User(AbstractBaseUser):
     def __str__(self):
         return f"{self.nickname}({self.email})"
 
+    def __str__(self):
+        return f'{self.nickname}({self.email})'
+
 
 class Follow(models.Model):
     id = models.AutoField(primary_key=True)
