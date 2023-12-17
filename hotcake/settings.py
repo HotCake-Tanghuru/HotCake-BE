@@ -102,7 +102,7 @@ SIMPLE_JWT = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    "users.lib.backends.SettingsBackend",
+    #"users.lib.backends.SettingsBackend",
     "django.contrib.auth.backends.ModelBackend",
 )
 

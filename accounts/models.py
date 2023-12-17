@@ -70,6 +70,9 @@ class User(AbstractBaseUser):
         auto_now=True, null=True, blank=True, verbose_name="마지막 로그인"
     )
 
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"
@@ -78,8 +81,11 @@ class User(AbstractBaseUser):
     def __str__(self):
         return f"{self.nickname}({self.email})"
 
-    def __str__(self):
-        return f'{self.nickname}({self.email})'
+    def has_module_perms(self, app_label):
+        return True
+    
+    def has_perm(self, perm, obj=None):
+        return True
 
 
 class Follow(models.Model):
@@ -102,11 +108,18 @@ class Like(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, verbose_name="사용자 아이디", on_delete=models.CASCADE)
     trend = models.ForeignKey(
-        Trend, verbose_name="트렌드 아이디", related_name="trend", on_delete=models.CASCADE
+        Trend,
+        verbose_name="트렌드 아이디",
+        related_name="trend",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
     trend_mission = models.ForeignKey(
         Trend,
         verbose_name="트렌드 미션 아이디",
         related_name="trend_mission",
         on_delete=models.CASCADE,
+        blank=True,
+        null=True,
     )
