@@ -2,12 +2,10 @@ from rest_framework import serializers
 from .models import TrendMission, UserTrendItem, Stamp
 
 
-
 class PostTrendMissionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = TrendMission
         fields = ["user", "trend"]
-
 
 
 class TrendMissionsSerializer(serializers.ModelSerializer):
@@ -43,9 +41,7 @@ class UserTrendItemUpdateSerializer(serializers.ModelSerializer):
         fields = ["user", "image", "content"]
 
 
-    
 class StampSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stamp
         fields = ["user", "trend_mission", "created_at"]
-

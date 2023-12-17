@@ -34,8 +34,6 @@ class PostTrendMissionView(GenericAPIView):
 
             # 트렌드 미션을 생성하면, 해당하는 트렌드 아이템들을 유저에게 개인적으로 할당
             trend = request.data["trend"]
-            print("###########")
-            print(trend)
             trend_item_list = TrendItem.objects.filter(trend=trend)
 
             for trend_item in trend_item_list:
@@ -106,7 +104,7 @@ class CheckMissionCompleteView(GenericAPIView):
             return Response("존재하지 않는 트렌드 미션입니다.", status=404)
 
         trend_mission = TrendMission.objects.get(pk=pk)
-        user_id = request.data["user_id"]
+        user_id = request.data["user"]
         user_id = User.objects.get(pk=user_id)
 
         # 해당하는 트렌드 미션 아이템 목록 찾기
@@ -133,7 +131,6 @@ class CheckMissionCompleteView(GenericAPIView):
 
         return Response(serializer.data, status=200)
 
-
 class StampDetailView(GenericAPIView):
     def get(self, request, pk):
         """스탬프 상세 조회"""
@@ -156,3 +153,15 @@ class StampDetailView(GenericAPIView):
             trend_item_list, many=True
         ).data
         return Response(result, status=200)
+      
+class StampListView(GenericAPIView):
+    """스탬프 리스트 조회"""
+
+    def get(self, request, user_id):
+        # 사용자 존재 여부 확인
+        if not User.objects.filter(pk=user_id).exists():
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 사용자의 스탬프 리스트 조회
+        stamp_list = Stamp.objects.filter(user=user_id)
+        serializer = StampSerializer(stamp_list, many=True)
+        return Response(serializer.data, status=200)

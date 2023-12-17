@@ -63,7 +63,13 @@ class UserTrendItem(models.Model):
     content = models.CharField(max_length=300, verbose_name="트렌드 아이템 인증 내용")
 
     def __str__(self):
-        return self.user.nickname + "의 " + self.trend_mission.trend.name + " 트렌드 미션의 " + self.trend_item.title
+        return (
+            self.user.nickname
+            + "의 "
+            + self.trend_mission.trend.name
+            + " 트렌드 미션의 "
+            + self.trend_item.title
+        )
 
 
 class Stamp(models.Model):
@@ -78,6 +84,7 @@ class Stamp(models.Model):
         verbose_name="트렌드 미션 아이디",
         on_delete=models.PROTECT,
     )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="스탬프 발급일")
 
     def __str__(self):
         return self.user.nickname + "의 " + self.trend_mission.trend.name + "스탬프"
