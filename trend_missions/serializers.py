@@ -47,4 +47,5 @@ class UserTrendItemUpdateSerializer(serializers.ModelSerializer):
 class StampSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stamp
-        fields = ["user", "trend"]
+        fields = ["user", "trend_mission", "created_at"]
+
