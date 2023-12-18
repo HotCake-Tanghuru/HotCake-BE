@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
-from .models import User
+from .models import User, Like
 
 
 class UserSerializer(serializers.Serializer):
@@ -26,3 +26,8 @@ class UserSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = User.objects.create(**validated_data)
         return user
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ["id", "user", "trend", "trend_mission"]
