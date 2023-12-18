@@ -7,6 +7,7 @@ urlpatterns = [
     path("about/<int:pk>", views.TrendMissionDetailView.as_view(), name="trend_mission_detail"),
     path("mission-item/<int:pk>/edit", views.TrendMissionItemUpdateView.as_view(), name="trend_mission_item_update"),
     path("<int:pk>/complete", views.CheckMissionCompleteView.as_view(), name="trend_mission_complete"),
-    path("users/stamp/<int:pk>", views.StampDetailView.as_view(), name="stamp_detail")
+    path("users/stamp/<int:pk>", views.StampDetailView.as_view(), name="stamp_detail"),
     path("users/<int:user_id>/stamp", views.StampListView.as_view(), name="stamp_list"),
+    path("<int:trend_mission_id>/comments/<int:user_id>", views.CommentView.as_view(), name="trend_mission_comment")
 ]

@@ -10,10 +10,11 @@ from .serializers import (
     UserTrendItemSerializer,
     UserTrendItemUpdateSerializer,
     StampSerializer,
+    CommentSerializer
 )
 
 # models
-from .models import TrendMission, UserTrendItem, Stamp
+from .models import TrendMission, UserTrendItem, Stamp, Comment
 from trends.models import TrendItem, Trend
 from accounts.models import User
 
@@ -153,10 +154,9 @@ class StampDetailView(GenericAPIView):
             trend_item_list, many=True
         ).data
         return Response(result, status=200)
-      
+    
 class StampListView(GenericAPIView):
     """스탬프 리스트 조회"""
-
     def get(self, request, user_id):
         # 사용자 존재 여부 확인
         if not User.objects.filter(pk=user_id).exists():
@@ -165,3 +165,27 @@ class StampListView(GenericAPIView):
         stamp_list = Stamp.objects.filter(user=user_id)
         serializer = StampSerializer(stamp_list, many=True)
         return Response(serializer.data, status=200)
+
+
+class CommentView(GenericAPIView):
+    """댓글 작성"""
+    def post(self, request, trend_mission_id, user_id):
+        trend_mission = TrendMission.objects.get(pk=trend_mission_id)
+        # 트렌드 미션 존재 여부 확인
+        if not trend_mission:
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인 
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+
+        # 댓글 작성
+        content= request.data["content"]
+        comment = Comment.objects.create(
+            user=user,
+            trend_mission=trend_mission,
+            content=content,
+        )
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=200)
+    
