@@ -11,12 +11,18 @@ from .serializers import (
     UserTrendItemUpdateSerializer,
     StampSerializer,
 )
+from accounts.serializers import LikeSerializer
 
 # models
 from .models import TrendMission, UserTrendItem, Stamp
 from trends.models import TrendItem, Trend
-from accounts.models import User
+from accounts.models import User, Like
 
+# jwt 
+from hotcake.settings import SECRET_KEY
+from accounts.models import User
+import jwt
+from django.shortcuts import get_object_or_404
 
 class PostTrendMissionView(GenericAPIView):
     """트렌드 인증 미션 생성"""
@@ -74,6 +80,8 @@ class TrendMissionDetailView(GenericAPIView):
         user_trend_item_list = UserTrendItem.objects.filter(trend_mission=pk)
         result = serializer.data
         result["trend_item_list"] = user_trend_item_list.values()
+
+        # 조회수, 댓글 추가 예정
         return Response(result, status=200)
 
 
@@ -153,7 +161,7 @@ class StampDetailView(GenericAPIView):
             trend_item_list, many=True
         ).data
         return Response(result, status=200)
-      
+    
 class StampListView(GenericAPIView):
     """스탬프 리스트 조회"""
 
@@ -165,3 +173,33 @@ class StampListView(GenericAPIView):
         stamp_list = Stamp.objects.filter(user=user_id)
         serializer = StampSerializer(stamp_list, many=True)
         return Response(serializer.data, status=200)
+    
+class TrendMissionLikeView(GenericAPIView):
+    """트렌드 미션 좋아요"""
+
+    def put(self, request, pk):
+        # 트렌드 미션 존재 여부 확인
+        if not TrendMission.objects.filter(pk=pk).exists():
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+        
+        """해당하는 좋아요가 이미 있다면 좋아요 취소"""
+        # 요청한 사용자 판별
+        access = request.COOKIES['access']
+        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'], options={'verify_signature': False})
+        # payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+        user_id = payload.get('user_id')
+        user = get_object_or_404(User, pk=user_id)
+
+        if Like.objects.filter(user=user, trend_mission=pk).exists():
+            like = Like.objects.get(user=user, trend_mission=pk)
+            like.delete()
+            return Response("좋아요 취소", status=200)
+    
+
+        # 없다면 트렌드 미션 좋아요 처리
+        like = Like.objects.create(
+            user=user,
+            trend_mission=TrendMission.objects.get(pk=pk),
+        )
+
+        return Response(LikeSerializer(like).data, status=200)

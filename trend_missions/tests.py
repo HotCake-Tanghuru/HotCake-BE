@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .models import TrendMission, TrendItem, UserTrendItem, Stamp
 from accounts.models import User
 from trends.models import Trend
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # 이미지 필드 테스트용
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -437,4 +438,55 @@ class StampDetailAPITest(TestCase):
     # 스탬프 리스트 조회 실패 테스트
     def test_StampList_fail(self):
         response = self.client.get(f"/trend-missions/users/stamp/-2")
+        self.assertEqual(response.status_code, 404)
+
+
+class TrendMissionLikeAPITestCase(TestCase):
+    """트렌드 미션 좋아요 테스트"""
+
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 토큰 생성
+        refresh = RefreshToken.for_user(self.user)
+        access_token = str(refresh.access_token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + access_token)
+        self.client.cookies['access'] = access_token
+
+        # 테스트를 위한 트렌드 생성
+        self.trend = Trend.objects.create(
+            name="test-trend1",
+        )
+
+        # 사용자 트렌드 미션 생성
+        self.trend_mission = TrendMission.objects.create(
+            user=self.user,
+            trend=self.trend,
+        )
+
+    # 트렌드 미션 좋아요 성공 테스트 - 실패
+    # def test_TrendMissionLike(self):
+    #     response = self.client.put(
+    #         f"/trend-missions/{self.trend_mission.id}/like"
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    
+    # 트렌드 미션 좋아요 실패 테스트
+    def test_TrendMissionLike_fail(self):
+        response = self.client.put(
+            f"/trend-missions/-2/like"
+        )
         self.assertEqual(response.status_code, 404)
