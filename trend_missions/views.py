@@ -188,4 +188,24 @@ class CommentView(GenericAPIView):
         )
         serializer = CommentSerializer(comment)
         return Response(serializer.data, status=200)
-    
+
+class CommentUpdateView(GenericAPIView):
+    """댓글 수정"""
+    def patch(self, request, comment_id, user_id):
+        comment = Comment.objects.get(pk=comment_id)
+        # 댓글 존재 여부 확인
+        if not comment:
+            return Response("존재하지 않는 댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 댓글 작성자 확인
+        if comment.user != user:
+            return Response("댓글 작성자가 아니라 수정 권한이 없습니다.", status=404)
+        # 댓글 수정
+        content = request.data["content"]
+        comment.content = content
+        comment.save()
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=200)
