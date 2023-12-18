@@ -252,7 +252,7 @@ class CommentReplyTest(TestCase):
             content="test-comment",
         )
 
-    # 대댓글 성공 테스트
+    # 대댓글 작성 성공 테스트
     def test_comment_reply_success(self):
         # 대댓글 생성
         response = self.client.post(
@@ -263,8 +263,8 @@ class CommentReplyTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
     
-    """대댓글 실패 테스트"""
-    # 대댓글 실패 테스트 - 없는 댓글
+    """대댓글 작성 실패 테스트"""
+    # 대댓글 작성 실패 테스트 - 없는 댓글
     def test_comment_reply_fail(self):
         # 대댓글 생성
         response = self.client.post(
@@ -275,7 +275,7 @@ class CommentReplyTest(TestCase):
         )
         self.assertEqual(response.status_code, 404)
     
-    # 대댓글 실패 테스트 - 없는 사용자의 요청
+    # 대댓글 작성 실패 테스트 - 없는 사용자의 요청
     def test_comment_reply_fail2(self):
         # 대댓글 생성
         response = self.client.post(
@@ -285,3 +285,99 @@ class CommentReplyTest(TestCase):
             }
         )
         self.assertEqual(response.status_code, 404)
+    
+    """대댓글 수정 테스트"""
+    # 대댓글 수정 성공 테스트
+    def test_comment_reply_update_success(self):
+        # 대댓글 생성
+        response = self.client.post(
+            f"/trend-missions/comments/{self.comment.id}/replies/{self.user.id}",
+            {
+                "content": "test-reply",
+            }
+        )
+        # 대댓글 생성
+        self.comment_reply = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-reply",
+            parent_comment=self.comment,
+        )
+        # 대댓글 수정
+        response = self.client.patch(
+            f"/trend-missions/comments/{self.comment_reply.id}/replies/{self.user.id}",
+            {
+                "content": "test-reply-update",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+
+    # 대댓글 수정 실패 테스트 - 작성자가 다름
+    def test_comment_reply_update_fail(self):
+        # 다른 사용자 생성
+        user2 = User.objects.create_user(
+            "kakao2",
+            "1234567892",
+            "test@gmail.com2",
+            "testuser2",
+            "testprofileimg2",
+            "testbio2",
+            "123456789@2"
+        )
+        # 대댓글 생성
+        self.comment_reply = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-reply",
+            parent_comment=self.comment,
+        )
+        # 대댓글 수정
+        response = self.client.patch(
+            f"/trend-missions/comments/{self.comment_reply.id}/replies/-2",
+            {
+                "content": "test-reply-update",
+            }
+        )
+        self.assertEqual(response.status_code, 404)
+    
+    """대댓글 삭제 테스트"""
+    # 대댓글 삭제 성공 테스트
+    def test_comment_reply_delete_success(self):
+        # 대댓글 생성
+        self.comment_reply = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-reply",
+            parent_comment=self.comment,
+        )
+        # 대댓글 삭제
+        response = self.client.delete(
+            f"/trend-missions/comments/{self.comment_reply.id}/replies/{self.user.id}",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    # 대댓글 삭제 실패 테스트 - 작성자가 다름
+    def test_comment_reply_delete_fail(self):
+        # 다른 사용자 생성
+        user2 = User.objects.create_user(
+            "kakao2",
+            "1234567892",
+            "test@gmail.com2",
+            "testuser2",
+            "testprofileimg2",
+            "testbio2",
+            "123456789@2"
+        )
+        # 대댓글 생성
+        self.comment_reply = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-reply",
+            parent_comment=self.comment,
+        )
+        # 대댓글 삭제
+        response = self.client.delete(
+            f"/trend-missions/comments/{self.comment_reply.id}/replies/-2",
+        )
+        self.assertEqual(response.status_code, 404)
+        

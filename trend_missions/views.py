@@ -250,4 +250,40 @@ class CommentReply(GenericAPIView):
         serializer = CommentSerializer(reply)
         return Response(serializer.data, status=200)
     
+    """대댓글 수정"""
+    def patch(self, request, comment_id, user_id):
+        reply = Comment.objects.get(pk=comment_id)
+        # 대댓글 존재 여부 확인
+        if not reply:
+            return Response("존재하지 않는 대댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 대댓글 작성자 확인
+        if reply.user != user:
+            return Response("대댓글 작성자가 아니라 수정 권한이 없습니다.", status=404)
+        # 대댓글 수정
+        content = request.data["content"]
+        reply.content = content
+        reply.save()
+        serializer = CommentSerializer(reply)
+        return Response(serializer.data, status=200)
+
+    """대댓글 삭제"""
+    def delete(self, request, comment_id, user_id):
+        reply = Comment.objects.get(pk=comment_id)
+        # 대댓글 존재 여부 확인
+        if not reply:
+            return Response("존재하지 않는 대댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 대댓글 작성자 확인
+        if reply.user != user:
+            return Response("대댓글 작성자가 아니라 삭제 권한이 없습니다.", status=404)
+        # 대댓글 삭제
+        reply.delete()
+        return Response("대댓글이 삭제되었습니다.", status=200)
     
