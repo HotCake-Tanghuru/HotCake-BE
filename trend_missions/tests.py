@@ -143,4 +143,73 @@ class CommentTest(TestCase):
             }
         )
         self.assertEqual(response.status_code, 404)
+    # 댓글 삭제
+    def test_comment_delete_success(self):
+        # 댓글 생성
+        response = self.client.post(
+            f"/trend-missions/1/comments/{self.user.id}",
+            {
+                "content": "test-comment",
+            }
+        )
+        # 댓글 삭제
+        response = self.client.delete(
+            f"/trend-missions/comments/1/{self.user.id}",
+        )
+        self.assertEqual(response.status_code, 200)
+
+    # 댓글 삭제 실패 테스트 - 없는 댓글
+    def test_comment_delete_fail(self):
+        # 댓글 생성
+        response = self.client.post(
+            f"/trend-missions/1/comments/{self.user.id}",
+            {
+                "content": "test-comment",
+            }
+        )
+        # 댓글 삭제
+        response = self.client.delete(
+            f"/trend-missions/comments/-2/{self.user.id}",
+        )
+        self.assertEqual(response.status_code, 404)
+    
+    # 댓글 삭제 실패 테스트 - 없는 사용자의 요청
+    def test_comment_delete_fail2(self):
+        # 댓글 생성
+        response = self.client.post(
+            f"/trend-missions/1/comments/{self.user.id}",
+            {
+                "content": "test-comment",
+            }
+        )
+        # 댓글 삭제
+        response = self.client.delete(
+            f"/trend-missions/comments/1/-2",
+        )
+        self.assertEqual(response.status_code, 404)
+    
+    # 댓글 삭제 실패 테스트 - 댓글 작성자가 아닌 사용자의 요청
+    def test_comment_delete_fail3(self):
+        # 다른 사용자 생성
+        user2 = User.objects.create_user(
+            "kakao2",
+            "1234567892",
+            "test@gmail.com2",
+            "testuser2",
+            "testprofileimg2",
+            "testbio2",
+            "123456789@2"
+        )
+        # 댓글 생성
+        response = self.client.post(
+            f"/trend-missions/1/comments/{self.user.id}",
+            {
+                "content": "test-comment",
+            }
+        )
+        # 댓글 삭제
+        response = self.client.delete(
+            f"/trend-missions/comments/1/{user2.id}",
+        )
+        self.assertEqual(response.status_code, 404)
 
