@@ -177,21 +177,19 @@ class StampListView(GenericAPIView):
 class TrendMissionLikeView(GenericAPIView):
     """트렌드 미션 좋아요"""
 
-    def put(self, request, pk):
+    def put(self, request, trend_mission_id, user_id):
         # 트렌드 미션 존재 여부 확인
-        if not TrendMission.objects.filter(pk=pk).exists():
+        if not TrendMission.objects.filter(pk=trend_mission_id).exists():
             return Response("존재하지 않는 트렌드 미션입니다.", status=404)
-        
+        trend_mission = TrendMission.objects.get(pk=trend_mission_id)
         """해당하는 좋아요가 이미 있다면 좋아요 취소"""
-        # 요청한 사용자 판별
-        access = request.COOKIES['access']
-        payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'], options={'verify_signature': False})
-        # payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-        user_id = payload.get('user_id')
-        user = get_object_or_404(User, pk=user_id)
+        # 요청한 사용자가 있는지 확인
+        if not User.objects.filter(pk=user_id).exists():
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        user = User.objects.get(pk=user_id)
 
-        if Like.objects.filter(user=user, trend_mission=pk).exists():
-            like = Like.objects.get(user=user, trend_mission=pk)
+        if Like.objects.filter(user=user, trend_mission=trend_mission).exists():
+            like = Like.objects.get(user=user, trend_mission=trend_mission)
             like.delete()
             return Response("좋아요 취소", status=200)
     
@@ -199,7 +197,7 @@ class TrendMissionLikeView(GenericAPIView):
         # 없다면 트렌드 미션 좋아요 처리
         like = Like.objects.create(
             user=user,
-            trend_mission=TrendMission.objects.get(pk=pk),
+            trend_mission=TrendMission.objects.get(pk=trend_mission_id),
         )
 
         return Response(LikeSerializer(like).data, status=200)

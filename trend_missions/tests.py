@@ -478,15 +478,15 @@ class TrendMissionLikeAPITestCase(TestCase):
         )
 
     # 트렌드 미션 좋아요 성공 테스트 - 실패
-    # def test_TrendMissionLike(self):
-    #     response = self.client.put(
-    #         f"/trend-missions/{self.trend_mission.id}/like"
-    #     )
-    #     self.assertEqual(response.status_code, 200)
+    def test_TrendMissionLike(self):
+        response = self.client.put(
+            f"/trend-missions/{self.trend_mission.id}/like/{self.user.id}"
+        )
+        self.assertEqual(response.status_code, 200)
     
     # 트렌드 미션 좋아요 실패 테스트
     def test_TrendMissionLike_fail(self):
         response = self.client.put(
-            f"/trend-missions/-2/like"
+            f"/trend-missions/-2/like/{self.user.id}"
         )
         self.assertEqual(response.status_code, 404)
