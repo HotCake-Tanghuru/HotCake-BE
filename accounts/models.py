@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from trends.models import Trend
 
 
@@ -51,7 +51,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser):
+class User(AbstractUser):
     id = models.AutoField(primary_key=True)
     social_type = models.CharField(
         max_length=20, blank=True, null=True, verbose_name="소셜 타입"
@@ -65,13 +65,9 @@ class User(AbstractBaseUser):
         upload_to="media/image/profile/", blank=True, null=True, verbose_name="프로필 사진"
     )
     bio = models.TextField(blank=True, null=True, verbose_name="자기소개")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="가입일자")
-    last_login = models.DateTimeField(
-        auto_now=True, null=True, blank=True, verbose_name="마지막 로그인"
-    )
-
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
+    username = None
+    first_name = None
+    last_name = None
 
     objects = UserManager()
 
@@ -80,12 +76,6 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return f"{self.nickname}({self.email})"
-
-    def has_module_perms(self, app_label):
-        return True
-    
-    def has_perm(self, perm, obj=None):
-        return True
 
 
 class Follow(models.Model):
