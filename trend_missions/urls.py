@@ -12,4 +12,5 @@ urlpatterns = [
     path("<int:trend_mission_id>/comments/<int:user_id>", views.CommentView.as_view(), name="trend_mission_comment"),
     path("comments/<int:comment_id>/<int:user_id>", views.CommentUpdateView.as_view(), name="trend_mission_comment_update"),
     path("comments/<int:comment_id>/replies/<int:user_id>", views.CommentReply.as_view(), name="trend_mission_comment_reply"),
+    path("<int:trend_mission_id>/like/<int:user_id>", views.TrendMissionLikeView.as_view(), name="trend_mission_like"),
 ]
