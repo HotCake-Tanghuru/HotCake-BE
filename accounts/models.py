@@ -105,8 +105,12 @@ class Like(models.Model):
         blank=True,
         null=True,
     )
+
+    # 순환 참조 방지를 위해 아래와 같이 import
+    from trend_missions.models import TrendMission
+
     trend_mission = models.ForeignKey(
-        Trend,
+        TrendMission,
         verbose_name="트렌드 미션 아이디",
         related_name="trend_mission",
         on_delete=models.CASCADE,
