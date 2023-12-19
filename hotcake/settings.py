@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "trend_missions",
     # django-rest-framework
     "rest_framework",
+    "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
 ]
 
@@ -53,6 +54,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "hotcake.urls"
 
+AUTH_USER_MODEL = "accounts.User"
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [  # 기본 Permission 설정
         "rest_framework.permissions.IsAuthenticated",
@@ -60,51 +63,17 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (  # Authenticationt 설정
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_RENDERER_CLASSES": [  # api 결과 전달 방식
-        "rest_framework.renderers.JSONRenderer",  # json 방식
-    ],
-    "DEFAULT_PARSER_CLASSES": [  # 요청 받을 때 body 형태
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",  # serializer datetime format
 }
 
-# custom user
-AUTH_USER_MODEL = "accounts.User"
+REST_USE_JWT = True
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_PASSWORD_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_VERIFICATION = "none"
-
-REST_USE_JWT = False
-ACCOUNT_LOGOUT_ON_GET = False
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=18),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
     "BLACKLIST_AFTER_ROTATION": True,
-    "ALGORITHM": "HS512",
-    "SIGNING_KEY": "",
-    "AUTH_HEADER_TYPES": ("Bearer",),  # 인증 헤더 유형
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",  # 인증 헤더 명칭
-    "USER_ID_FIELD": "social_id",  # 사용자 식별을 위한 토큰에 포함할 사용자 모델의 DB 필드명
-    "USER_ID_CLAIM": "social_id",  # 사용자 식별을 저장하는 데 사용할 생성된 토큰의 클레임
-    "AUTH_TOKEN_CLASSES": (
-        "rest_framework_simplejwt.tokens.AccessToken",
-    ),  # 토큰 유형 지정 클래스
-    "TOKEN_TYPE_CLAIM": "token_type",  # 토큰 유형 저장 클레임 명칭
-    "JTI_CLAIM": "jti",
 }
 
-AUTHENTICATION_BACKENDS = (
-    #"users.lib.backends.SettingsBackend",
-    "django.contrib.auth.backends.ModelBackend",
-)
+AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
 
 TEMPLATES = [
     {

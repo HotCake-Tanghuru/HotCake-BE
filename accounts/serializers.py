@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from .models import User
+from .models import User, Like
 
 
 class UserSerializer(serializers.Serializer):
@@ -28,7 +28,6 @@ class UserSerializer(serializers.Serializer):
         user = User.objects.create(**validated_data)
         return user
 
-
 class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
 
@@ -48,3 +47,8 @@ class LogoutSerializer(serializers.Serializer):
 
         except TokenError as ex:
             raise exceptions.AuthenticationFailed(ex)
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ["id", "user", "trend", "trend_mission"]
