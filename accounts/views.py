@@ -4,14 +4,14 @@ import requests
 
 
 from django.shortcuts import redirect
-from rest_framework import generics, status
-from rest_framework.permissions import AllowAny
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, LogoutSerializer
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +21,7 @@ environ.Env.read_env(env_file=BASE_DIR / ".env")
 kakao_login_uri = "https://kauth.kakao.com/oauth/authorize"
 kakao_token_uri = "https://kauth.kakao.com/oauth/token"
 kakao_user_uri = "https://kapi.kakao.com/v2/user/me"
+kakao_logout_uri = "https://kauth.kakao.com/oauth/logout"
 
 
 class KakaoLogin(APIView):
@@ -35,7 +36,7 @@ class KakaoLogin(APIView):
         return res
 
 
-class KakaoCallback(generics.GenericAPIView):
+class KakaoCallback(APIView):
     permission_classes = [AllowAny]
     serializer_class = UserSerializer
 
@@ -63,18 +64,19 @@ class KakaoCallback(generics.GenericAPIView):
         )
 
         token_json = token_res.json()
-        access_token = token_json.get("access_token")
+        kakao_access_token = token_json.get("access_token")
 
-        if not access_token:
+        if not kakao_access_token:
             return Response(
                 {"message": "access_token이 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        access_token = f"Bearer {access_token}"
+
+        kakao_access_token = f"Bearer {kakao_access_token}"
 
         # 카카오 회원정보 요청
         auth_headers = {
-            "Authorization": access_token,
+            "Authorization": kakao_access_token,
             "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
         }
         user_info_res = requests.post(kakao_user_uri, headers=auth_headers)
@@ -124,5 +126,32 @@ class KakaoCallback(generics.GenericAPIView):
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
+
         response = Response(res, status=status.HTTP_200_OK)
         return response
+
+
+class KakaoLogout(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """카카오계정과 함께 로그아웃"""
+        client_id = env("KAKAO_REST_API_KEY")
+        logout_redirect_uri = env("KAKAO_LOGOUT_REDIRECT_URI")
+        uri = f"{kakao_logout_uri}?client_id={client_id}&logout_redirect_uri={logout_redirect_uri}"
+        res = redirect(uri)
+        return res
+
+
+class KakaoLogoutCallback(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = LogoutSerializer
+
+    def post(self, request):
+        """JWT 토큰을 블랙리스트에 추가"""
+        serializer = self.serializer_class(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(status=status.HTTP_200_OK)
