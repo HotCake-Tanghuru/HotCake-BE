@@ -37,6 +37,9 @@ class Comment(models.Model):
         "self", on_delete=models.CASCADE, blank=True, null=True
     )
 
+    def __str__(self):
+        return self.user.nickname + "의 " + self.trend_mission.trend.name + "댓글" + str(self.id)
+
 
 class UserTrendItem(models.Model):
     id = models.AutoField(primary_key=True)

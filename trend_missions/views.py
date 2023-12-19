@@ -10,11 +10,12 @@ from .serializers import (
     UserTrendItemSerializer,
     UserTrendItemUpdateSerializer,
     StampSerializer,
+    CommentSerializer
 )
 from accounts.serializers import LikeSerializer
 
 # models
-from .models import TrendMission, UserTrendItem, Stamp
+from .models import TrendMission, UserTrendItem, Stamp, Comment
 from trends.models import TrendItem, Trend
 from accounts.models import User, Like
 
@@ -164,7 +165,6 @@ class StampDetailView(GenericAPIView):
     
 class StampListView(GenericAPIView):
     """스탬프 리스트 조회"""
-
     def get(self, request, user_id):
         # 사용자 존재 여부 확인
         if not User.objects.filter(pk=user_id).exists():
@@ -173,6 +173,128 @@ class StampListView(GenericAPIView):
         stamp_list = Stamp.objects.filter(user=user_id)
         serializer = StampSerializer(stamp_list, many=True)
         return Response(serializer.data, status=200)
+
+
+class CommentView(GenericAPIView):
+    """댓글 작성"""
+    def post(self, request, trend_mission_id, user_id):
+        trend_mission = TrendMission.objects.get(pk=trend_mission_id)
+        # 트렌드 미션 존재 여부 확인
+        if not trend_mission:
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인 
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+
+        # 댓글 작성
+        content= request.data["content"]
+        comment = Comment.objects.create(
+            user=user,
+            trend_mission=trend_mission,
+            content=content,
+        )
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=200)
+
+class CommentUpdateView(GenericAPIView):
+    """댓글 수정"""
+    def patch(self, request, comment_id, user_id):
+        comment = Comment.objects.get(pk=comment_id)
+        # 댓글 존재 여부 확인
+        if not comment:
+            return Response("존재하지 않는 댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 댓글 작성자 확인
+        if comment.user != user:
+            return Response("댓글 작성자가 아니라 수정 권한이 없습니다.", status=404)
+        # 댓글 수정
+        content = request.data["content"]
+        comment.content = content
+        comment.save()
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=200)
+    
+    """댓글 삭제"""
+    def delete(self, request, comment_id, user_id):
+        comment = Comment.objects.get(pk=comment_id)
+        # 댓글 존재 여부 확인
+        if not comment:
+            return Response("존재하지 않는 댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 댓글 작성자 확인
+        if comment.user != user:
+            return Response("댓글 작성자가 아니라 삭제 권한이 없습니다.", status=404)
+        # 댓글 삭제
+        comment.delete()
+        return Response("댓글이 삭제되었습니다.", status=200)
+    
+# 대댓글 
+class CommentReply(GenericAPIView):
+    """대댓글 작성"""
+    def post(self, request, comment_id, user_id):
+        comment = Comment.objects.get(pk=comment_id)
+        # 댓글 존재 여부 확인
+        if not comment:
+            return Response("존재하지 않는 댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 대댓글 작성
+        content = request.data["content"]
+        reply = Comment.objects.create(
+            user=user,
+            trend_mission=comment.trend_mission,
+            content=content,
+            parent_comment=comment,
+        )
+        serializer = CommentSerializer(reply)
+        return Response(serializer.data, status=200)
+    
+    """대댓글 수정"""
+    def patch(self, request, comment_id, user_id):
+        reply = Comment.objects.get(pk=comment_id)
+        # 대댓글 존재 여부 확인
+        if not reply:
+            return Response("존재하지 않는 대댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 대댓글 작성자 확인
+        if reply.user != user:
+            return Response("대댓글 작성자가 아니라 수정 권한이 없습니다.", status=404)
+        # 대댓글 수정
+        content = request.data["content"]
+        reply.content = content
+        reply.save()
+        serializer = CommentSerializer(reply)
+        return Response(serializer.data, status=200)
+
+    """대댓글 삭제"""
+    def delete(self, request, comment_id, user_id):
+        reply = Comment.objects.get(pk=comment_id)
+        # 대댓글 존재 여부 확인
+        if not reply:
+            return Response("존재하지 않는 대댓글입니다.", status=404)
+        user = User.objects.get(pk=user_id)
+        # 사용자 존재 여부 확인
+        if not user:
+            return Response("존재하지 않는 사용자입니다.", status=404)
+        # 대댓글 작성자 확인
+        if reply.user != user:
+            return Response("대댓글 작성자가 아니라 삭제 권한이 없습니다.", status=404)
+        # 대댓글 삭제
+        reply.delete()
+        return Response("대댓글이 삭제되었습니다.", status=200)
+    
     
 class TrendMissionLikeView(GenericAPIView):
     """트렌드 미션 좋아요"""
