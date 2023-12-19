@@ -161,7 +161,7 @@ class KakaoLogoutCallback(APIView):
 
 
 class KakaoUnlink(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def delete(self, request):
         """카카오계정과 함께 회원탈퇴"""
