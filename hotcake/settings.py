@@ -88,8 +88,8 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": True,
-    "ALGORITHM": "HS512",
-    "SIGNING_KEY": "",
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),  # 인증 헤더 유형
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",  # 인증 헤더 명칭
     "USER_ID_FIELD": "social_id",  # 사용자 식별을 위한 토큰에 포함할 사용자 모델의 DB 필드명

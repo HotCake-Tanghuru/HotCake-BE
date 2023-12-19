@@ -1,8 +1,10 @@
-from django.test import TestCase, Client, RequestFactory
+from django.test import TestCase, Client
+from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
 from django.contrib.auth.models import User
 from .models import TrendMission, TrendItem, UserTrendItem, Stamp
 from accounts.models import User
 from trends.models import Trend
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # 이미지 필드 테스트용
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -14,14 +16,25 @@ class CreateTrendMissionAPITestCase(TestCase):
 
     def setUp(self):
         # 테스트를 위한 유저 생성
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 테스트를 위한 트렌드 생성
+        self.trend = Trend.objects.create(
+            name="test-trend",
         )
 
-
-class StampDetailAPITest(TestCase):
-    """스탬프 상세 조회 테스트"""
         # 테스트를 위한 트렌드 아이템 생성
         self.trend_item1 = TrendItem.objects.create(
             title="test-trend-item1",
@@ -44,7 +57,7 @@ class StampDetailAPITest(TestCase):
         )
         self.trend_item3.trend.set([self.trend])
 
-    # 정상 작동 테스트
+    # 정상 작동 테스트  
     def test_createTrendMission_success(self):
         response = self.client.post(
             "/trend-missions/create",
@@ -55,6 +68,7 @@ class StampDetailAPITest(TestCase):
     # 비정상 작동 테스트
     # 이미 생성된 경우 400 에러
     def test_already_createTrendMission_fail(self):
+        
         # 트렌드 미션 미리 생성
         TrendMission.objects.create(
             user=self.user,
@@ -69,16 +83,86 @@ class StampDetailAPITest(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+class TrendMissionDetailAPITestCase(TestCase):
+    """트렌드 미션 상세 조회 테스트"""
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 테스트를 위한 트렌드 생성
+        self.trend = Trend.objects.create(
+            name="test-trend1",
+        )
+
+        # 사용자 트렌드 미션 생성
+        self.trend_mission = TrendMission.objects.create(
+            user=self.user,
+            trend=self.trend,
+        )
+        # 테스트를 위한 트렌드 아이템 생성
+        self.trend_item1 = TrendItem.objects.create(
+            title="test-trend-item1",
+            content="test-trend-item-content1",
+            image="test-trend-item-image1",
+        )
+        self.trend_item1.trend.set([self.trend])
+
+        self.trend_item2 = TrendItem.objects.create(
+            title="test-trend-item2",
+            content="test-trend-item-content2",
+            image="test-trend-item-image2",
+        )
+        self.trend_item2.trend.set([self.trend])
+
+        self.trend_item3 = TrendItem.objects.create(
+            title="test-trend-item3",
+            content="test-trend-item-content3",
+            image="test-trend-item-image3",
+        )
+        self.trend_item3.trend.set([self.trend])
+
+    # 트렌드 미션 상세 조회 성공 테스트
+    def test_TrendMissions_detail(self):
+        response = self.client.get(f"/trend-missions/about/{self.trend_mission.id}")
+        self.assertEqual(response.status_code, 200)
+
+    # 트렌드 미션 상세 조회 실패 테스트
+    def test_TrendMissions_detail_fail(self):
+        response = self.client.get(f"/trend-missions/about/-2")
+        self.assertEqual(response.status_code, 404)
+
+
 # http://127.0.0.1:8000/trend-missions/{userid}
 class TrendMissionListAPITestCase(TestCase):
     """특정 사용자의 미션 리스트 조회 테스트"""
 
     def setUp(self):
         # 테스트를 위한 유저 생성
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
         )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
 
         # 테스트를 위한 트렌드 생성
         self.trend1 = Trend.objects.create(
@@ -114,14 +198,23 @@ class TrendMissionListAPITestCase(TestCase):
         self.assertEqual(response.data, [])
 
 
-class TrendMissionDetailAPITestCase(TestCase):
-    """트렌드 미션 상세 조회 테스트"""
+class StampDetailAPITest(TestCase):
+    """스탬프 상세 조회 테스트"""
     def setUp(self):
         # 테스트를 위한 유저 생성
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
         )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
 
         # 테스트를 위한 트렌드 생성
         self.trend = Trend.objects.create(
@@ -161,13 +254,13 @@ class TrendMissionDetailAPITestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-"""
-# 트렌드 미션 아이템 업데이트 테스트
-    # 트렌드 미션 아이템 업데이트 테스트
-    # 데이터 형태때문에 테스트가 계속 실패
-    # 직접 테스트로 대체
+# """
+# # 트렌드 미션 아이템 업데이트 테스트
+#     # 트렌드 미션 아이템 업데이트 테스트
+#     # 데이터 형태때문에 테스트가 계속 실패
+#     # 직접 테스트로 대체
     
-"""
+# """
 
 
 class TrendMissionCompleteAPITestCase(TestCase):
@@ -175,10 +268,19 @@ class TrendMissionCompleteAPITestCase(TestCase):
 
     def setUp(self):
         # 테스트를 위한 유저 생성
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
         )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
 
         # 테스트를 위한 트렌드 생성
         self.trend = Trend.objects.create(
@@ -226,7 +328,6 @@ class TrendMissionCompleteAPITestCase(TestCase):
         response = self.client.patch(
             f"/trend-missions/{self.trend_mission.id}/complete",
             {"user": self.user.id},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 200)
 
@@ -243,7 +344,6 @@ class TrendMissionCompleteAPITestCase(TestCase):
         response = self.client.patch(
             f"/trend-missions/{self.trend_mission.id}/complete",
             {"user": self.user.id},
-            content_type="application/json",
         )
         self.assertEqual(response.status_code, 202)
 
@@ -253,10 +353,19 @@ class StampListAPITestCase(TestCase):
 
     def setUp(self):
         # 테스트를 위한 유저 생성
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
         )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
 
         # 테스트를 위한 트렌드 생성
         self.trend = Trend.objects.create(
@@ -290,10 +399,19 @@ class StampDetailAPITest(TestCase):
     """스탬프 상세 조회 테스트"""
     def setUp(self):
         # 테스트를 위한 유저 생성
-        self.client = Client()
+        self.client = APIClient()
         self.user = User.objects.create_user(
-            "testuser", "testemail@test.com", "123456789@"
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
         )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
 
         # 테스트를 위한 트렌드 생성
         self.trend = Trend.objects.create(
@@ -320,4 +438,55 @@ class StampDetailAPITest(TestCase):
     # 스탬프 리스트 조회 실패 테스트
     def test_StampList_fail(self):
         response = self.client.get(f"/trend-missions/users/stamp/-2")
+        self.assertEqual(response.status_code, 404)
+
+
+class TrendMissionLikeAPITestCase(TestCase):
+    """트렌드 미션 좋아요 테스트"""
+
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 토큰 생성
+        refresh = RefreshToken.for_user(self.user)
+        access_token = str(refresh.access_token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + access_token)
+        self.client.cookies['access'] = access_token
+
+        # 테스트를 위한 트렌드 생성
+        self.trend = Trend.objects.create(
+            name="test-trend1",
+        )
+
+        # 사용자 트렌드 미션 생성
+        self.trend_mission = TrendMission.objects.create(
+            user=self.user,
+            trend=self.trend,
+        )
+
+    # 트렌드 미션 좋아요 성공 테스트 - 실패
+    def test_TrendMissionLike(self):
+        response = self.client.put(
+            f"/trend-missions/{self.trend_mission.id}/like/{self.user.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+    
+    # 트렌드 미션 좋아요 실패 테스트
+    def test_TrendMissionLike_fail(self):
+        response = self.client.put(
+            f"/trend-missions/-2/like/{self.user.id}"
+        )
         self.assertEqual(response.status_code, 404)
