@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TrendMission, UserTrendItem, Stamp
+from .models import TrendMission, UserTrendItem, Stamp, Comment
 
 
 class PostTrendMissionsSerializer(serializers.ModelSerializer):
@@ -16,6 +16,12 @@ class TrendMissionsSerializer(serializers.ModelSerializer):
     # is_all_certificated True로 변경
     def updateComplete(self, instance):
         instance.is_all_certificated = True
+        instance.save()
+        return instance
+
+    # view_count 1 증가
+    def updateViewCount(self, instance):
+        instance.view_count += 1
         instance.save()
         return instance
 
@@ -45,3 +51,16 @@ class StampSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stamp
         fields = ["user", "trend_mission", "created_at"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = [
+            "user",
+            "trend_mission",
+            "content",
+            "created_at",
+            "updated_at",
+            "parent_comment",
+        ]
