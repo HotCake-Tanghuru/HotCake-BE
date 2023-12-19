@@ -19,6 +19,12 @@ class TrendMissionsSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+    # view_count 1 증가
+    def updateViewCount(self, instance):
+        instance.view_count += 1
+        instance.save()
+        return instance
+
 
 class UserTrendItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -46,7 +52,15 @@ class StampSerializer(serializers.ModelSerializer):
         model = Stamp
         fields = ["user", "trend_mission", "created_at"]
 
+
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["user", "trend_mission", "content", "created_at", "updated_at", "parent_comment"]
+        fields = [
+            "user",
+            "trend_mission",
+            "content",
+            "created_at",
+            "updated_at",
+            "parent_comment",
+        ]

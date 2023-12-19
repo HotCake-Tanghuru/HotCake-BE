@@ -133,6 +133,13 @@ class TrendMissionDetailAPITestCase(TestCase):
         )
         self.trend_item3.trend.set([self.trend])
 
+        # 댓글 생성
+        self.comment = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-comment",
+        )
+
     # 트렌드 미션 상세 조회 성공 테스트
     def test_TrendMissions_detail(self):
         response = self.client.get(f"/trend-missions/about/{self.trend_mission.id}")
@@ -820,12 +827,11 @@ class CommentReplyTest(TestCase):
     def test_comment_reply_delete_success(self):
         # 대댓글 생성
         self.comment_reply = Comment.objects.create(
-            f"/trend-missions/{self.trend_mission.id}/complete",
-            {"user": self.user.id},
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-reply",
+            parent_comment=self.comment,
         )
-        self.assertEqual(response.status_code, 202)
-
-
         # 대댓글 삭제
         response = self.client.delete(
             f"/trend-missions/comments/{self.comment_reply.id}/replies/{self.user.id}",
