@@ -22,6 +22,7 @@ kakao_login_uri = "https://kauth.kakao.com/oauth/authorize"
 kakao_token_uri = "https://kauth.kakao.com/oauth/token"
 kakao_user_uri = "https://kapi.kakao.com/v2/user/me"
 kakao_logout_uri = "https://kauth.kakao.com/oauth/logout"
+kakao_unlink_uri = "https://kapi.kakao.com/v1/user/unlink"
 
 
 class KakaoLogin(APIView):
@@ -71,6 +72,8 @@ class KakaoCallback(APIView):
                 {"message": "access_token이 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        request.session["kakao_access_token"] = kakao_access_token
 
         kakao_access_token = f"Bearer {kakao_access_token}"
 
@@ -153,5 +156,36 @@ class KakaoLogoutCallback(APIView):
 
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class KakaoUnlink(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        """카카오계정과 함께 회원탈퇴"""
+        kakao_access_token = request.session.get("kakao_access_token")
+        if not kakao_access_token:
+            return Response(
+                {"message": "access_token이 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        kakao_access_token = f"Bearer {kakao_access_token}"
+
+        # 카카오 연결끊기 요청
+        auth_headers = {
+            "Authorization": kakao_access_token,
+            "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+        }
+        unlinked_res = requests.post(kakao_unlink_uri, headers=auth_headers)
+        unlinked_json = unlinked_res.json()
+
+        social_type = "kakao"
+        social_id = f"{social_type}_{unlinked_json.get('id')}"
+
+        user = User.objects.get(social_id=social_id)
+        user.delete()
 
         return Response(status=status.HTTP_200_OK)
