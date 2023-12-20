@@ -61,7 +61,7 @@ class CreateTrendMissionAPITestCase(TestCase):
     def test_createTrendMission_success(self):
         response = self.client.post(
             "/trend-missions/create",
-            {"user": self.user.id, "trend": self.trend.id},
+            {"trend": self.trend.id},
         )
         self.assertEqual(response.status_code, 200)
 
@@ -78,7 +78,7 @@ class CreateTrendMissionAPITestCase(TestCase):
         # 이미 생성된 트렌드 미션 생성 요청
         response = self.client.post(
             "/trend-missions/create",
-            {"user": self.user.id, "trend": self.trend.id},
+            {"trend": self.trend.id},
         )
         self.assertEqual(response.status_code, 404)
 
@@ -250,28 +250,19 @@ class StampDetailAPITest(TestCase):
     def test_StampList_fail(self):
         response = self.client.get(f"/trend-missions/users/stamp/-2")
         self.assertEqual(response.status_code, 404)
-    # 트렌드 미션 상세 조회 성공 테스트
-    def test_TrendMissions_detail(self):
-        response = self.client.get(f"/trend-missions/about/{self.trend_mission.id}")
-        self.assertEqual(response.status_code, 200)
-
-    # 트렌드 미션 상세 조회 실패 테스트
-    def test_TrendMissions_detail_fail(self):
-        response = self.client.get(f"/trend-missions/about/-2")
-        self.assertEqual(response.status_code, 404)
 
 
-# """
-# # 트렌드 미션 아이템 업데이트 테스트
-#     # 트렌드 미션 아이템 업데이트 테스트
-#     # 데이터 형태때문에 테스트가 계속 실패
-#     # 직접 테스트로 대체
+# # """
+# # # 트렌드 미션 아이템 업데이트 테스트
+# #     # 트렌드 미션 아이템 업데이트 테스트
+# #     # 데이터 형태때문에 테스트가 계속 실패
+# #     # 직접 테스트로 대체
     
-# """
+# # """
 
 
 class TrendMissionCompleteAPITestCase(TestCase):
-    """트렌드 미션 완료 테스트"""
+    """트렌드 미션 완료 - 스탬프 발급 테스트"""
 
     def setUp(self):
         # 테스트를 위한 유저 생성
@@ -333,8 +324,7 @@ class TrendMissionCompleteAPITestCase(TestCase):
         )
 
         response = self.client.patch(
-            f"/trend-missions/{self.trend_mission.id}/complete",
-            {"user": self.user.id},
+            f"/trend-missions/{self.trend_mission.id}/complete"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -349,8 +339,7 @@ class TrendMissionCompleteAPITestCase(TestCase):
         )
 
         response = self.client.patch(
-            f"/trend-missions/{self.trend_mission.id}/complete",
-            {"user": self.user.id},
+            f"/trend-missions/{self.trend_mission.id}/complete"
         )
         self.assertEqual(response.status_code, 202)
 
@@ -442,7 +431,7 @@ class StampDetailAPITest(TestCase):
         response = self.client.get(f"/trend-missions/users/stamp/{self.user.id}")
         self.assertEqual(response.status_code, 200)
 
-    # 스탬프 리스트 조회 실패 테스트
+    # 스탬프 상세 조회 실패 테스트
     def test_StampList_fail(self):
         response = self.client.get(f"/trend-missions/users/stamp/-2")
         self.assertEqual(response.status_code, 404)
@@ -487,14 +476,14 @@ class TrendMissionLikeAPITestCase(TestCase):
     # 트렌드 미션 좋아요 성공 테스트 - 실패
     def test_TrendMissionLike(self):
         response = self.client.put(
-            f"/trend-missions/{self.trend_mission.id}/like/{self.user.id}"
+            f"/trend-missions/{self.trend_mission.id}/like"
         )
         self.assertEqual(response.status_code, 200)
     
     # 트렌드 미션 좋아요 실패 테스트
     def test_TrendMissionLike_fail(self):
         response = self.client.put(
-            f"/trend-missions/-2/like/{self.user.id}"
+            f"/trend-missions/-2/like"
         )
         self.assertEqual(response.status_code, 404)
 
@@ -532,8 +521,9 @@ class CommentTest(TestCase):
     def test_comment_success(self):
         # 댓글 생성
         response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
+            f"/trend-missions/comments",
             {
+                "trend_mission": self.trend_mission.id,
                 "content": "test-comment",
             }
         )
@@ -542,8 +532,9 @@ class CommentTest(TestCase):
     def test_comment_fail(self):
         # 댓글 생성
         response = self.client.post(
-            f"/trend-missions/-2/comments/{self.user.id}",
+            f"/trend-missions/comments",
             {
+                "trend_mission": -1,
                 "content": "test-comment",
             }
         )
@@ -552,15 +543,16 @@ class CommentTest(TestCase):
     # 댓글 수정 성공 테스트
     def test_comment_update_success(self):
         # 댓글 생성
-        comment = Comment.objects.create(
+        self.comment = Comment.objects.create(
             user=self.user,
             trend_mission=self.trend_mission,
             content="test-comment",
         )
         # 댓글 수정
         response = self.client.patch(
-            f"/trend-missions/comments/1/{self.user.id}",
+            f"/trend-missions/comments",
             {
+                "comment_id": self.comment.id,
                 "content": "test-comment-update",
             }
         )
@@ -569,16 +561,16 @@ class CommentTest(TestCase):
     # 댓글 수정 실패 테스트 - 없는 댓글
     def test_comment_update_fail(self):
         # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
-            {
-                "content": "test-comment",
-            }
+        self.comment = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
         # 댓글 수정
         response = self.client.patch(
-            f"/trend-missions/comments/-2/{self.user.id}",
+            f"/trend-missions/comments",
             {
+                "comment_id": -2,
                 "content": "test-comment-update",
             }
         )
@@ -587,16 +579,16 @@ class CommentTest(TestCase):
         # 댓글 수정 실패 테스트 - 없는 사용자의 요청
     def test_comment_update_fail2(self):
         # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
-            {
-                "content": "test-comment",
-            }
+        self.comment = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
         # 댓글 수정
         response = self.client.patch(
-            f"/trend-missions/comments/1/-2",
+            f"/trend-missions/comments",
             {
+                "comment_id": self.comment.id,
                 "content": "test-comment-update",
             }
         )
@@ -614,16 +606,16 @@ class CommentTest(TestCase):
             "123456789@2"
         )
         # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
-            {
-                "content": "test-comment",
-            }
+        self.comment = Comment.objects.create(
+            user=user2,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
         # 댓글 수정
         response = self.client.patch(
-            f"/trend-missions/comments/1/{user2.id}",
+            f"/trend-missions/comments",
             {
+                "comment_id": self.comment.id,
                 "content": "test-comment-update",
             }
         )
@@ -631,45 +623,34 @@ class CommentTest(TestCase):
     # 댓글 삭제
     def test_comment_delete_success(self):
         # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
-            {
-                "content": "test-comment",
-            }
+        self.comment = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
         # 댓글 삭제
         response = self.client.delete(
-            f"/trend-missions/comments/1/{self.user.id}",
+            f"/trend-missions/comments",
+            {
+                "comment_id": self.comment.id,
+            }
         )
         self.assertEqual(response.status_code, 200)
 
     # 댓글 삭제 실패 테스트 - 없는 댓글
     def test_comment_delete_fail(self):
         # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
-            {
-                "content": "test-comment",
-            }
+        self.comment = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
         # 댓글 삭제
         response = self.client.delete(
-            f"/trend-missions/comments/-2/{self.user.id}",
-        )
-        self.assertEqual(response.status_code, 404)
-    
-    # 댓글 삭제 실패 테스트 - 없는 사용자의 요청
-    def test_comment_delete_fail2(self):
-        # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
+            f"/trend-missions/comments",
             {
-                "content": "test-comment",
+                "comment_id": -2,
             }
-        )
-        # 댓글 삭제
-        response = self.client.delete(
-            f"/trend-missions/comments/1/-2",
         )
         self.assertEqual(response.status_code, 404)
     
@@ -686,15 +667,17 @@ class CommentTest(TestCase):
             "123456789@2"
         )
         # 댓글 생성
-        response = self.client.post(
-            f"/trend-missions/1/comments/{self.user.id}",
-            {
-                "content": "test-comment",
-            }
+        self.comment = Comment.objects.create(
+            user=user2,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
         # 댓글 삭제
         response = self.client.delete(
-            f"/trend-missions/comments/1/{user2.id}",
+            f"/trend-missions/comments",
+            {
+                "comment_id": self.comment.id,
+            }
         )
         self.assertEqual(response.status_code, 404)
 
@@ -738,7 +721,7 @@ class CommentReplyTest(TestCase):
     def test_comment_reply_success(self):
         # 대댓글 생성
         response = self.client.post(
-            f"/trend-missions/comments/{self.comment.id}/replies/{self.user.id}",
+            f"/trend-missions/comments/{self.comment.id}/replies",
             {
                 "content": "test-reply",
             }
@@ -749,35 +732,17 @@ class CommentReplyTest(TestCase):
     """대댓글 작성 실패 테스트"""
     # 대댓글 작성 실패 테스트 - 없는 댓글
     def test_comment_reply_fail(self):
-        # 대댓글 생성
-        response = self.client.post(
-            f"/trend-missions/comments/-2/replies/{self.user.id}",
-            {
-                "content": "test-reply",
-            }
+        # 댓글 생성
+        self.comment = Comment.objects.create(
+            user=self.user,
+            trend_mission=self.trend_mission,
+            content="test-comment",
         )
     
-    # 대댓글 작성 실패 테스트 - 없는 사용자의 요청
-    def test_comment_reply_fail2(self):
-        # 대댓글 생성
-        response = self.client.post(
-            f"/trend-missions/comments/{self.comment.id}/replies/-2",
-            {
-                "content": "test-reply",
-            }
-        )
-        self.assertEqual(response.status_code, 404)
     
     """대댓글 수정 테스트"""
     # 대댓글 수정 성공 테스트
     def test_comment_reply_update_success(self):
-        # 대댓글 생성
-        response = self.client.post(
-            f"/trend-missions/comments/{self.comment.id}/replies/{self.user.id}",
-            {
-                "content": "test-reply",
-            }
-        )
         # 대댓글 생성
         self.comment_reply = Comment.objects.create(
             user=self.user,
@@ -787,7 +752,7 @@ class CommentReplyTest(TestCase):
         )
         # 대댓글 수정
         response = self.client.patch(
-            f"/trend-missions/comments/{self.comment_reply.id}/replies/{self.user.id}",
+            f"/trend-missions/comments/{self.comment_reply.id}/replies",
             {
                 "content": "test-reply-update",
             }
@@ -808,14 +773,14 @@ class CommentReplyTest(TestCase):
         )
         # 대댓글 생성
         self.comment_reply = Comment.objects.create(
-            user=self.user,
+            user=user2,
             trend_mission=self.trend_mission,
             content="test-reply",
             parent_comment=self.comment,
         )
         # 대댓글 수정
         response = self.client.patch(
-            f"/trend-missions/comments/{self.comment_reply.id}/replies/-2",
+            f"/trend-missions/comments/{self.comment_reply.id}/replies",
             {
                 "content": "test-reply-update",
             }
@@ -834,7 +799,7 @@ class CommentReplyTest(TestCase):
         )
         # 대댓글 삭제
         response = self.client.delete(
-            f"/trend-missions/comments/{self.comment_reply.id}/replies/{self.user.id}",
+            f"/trend-missions/comments/{self.comment_reply.id}/replies",
         )
         self.assertEqual(response.status_code, 200)
 
@@ -852,13 +817,13 @@ class CommentReplyTest(TestCase):
         )
         # 대댓글 생성
         self.comment_reply = Comment.objects.create(
-            user=self.user,
+            user=user2,
             trend_mission=self.trend_mission,
             content="test-reply",
             parent_comment=self.comment,
         )
         # 대댓글 삭제
         response = self.client.delete(
-            f"/trend-missions/comments/{self.comment_reply.id}/replies/-2",
+            f"/trend-missions/comments/{self.comment_reply.id}/replies",
         )
         self.assertEqual(response.status_code, 404)

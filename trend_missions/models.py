@@ -34,7 +34,7 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="작성일")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="수정일")
     parent_comment = models.ForeignKey(
-        "self", on_delete=models.CASCADE, blank=True, null=True
+        "self", on_delete=models.CASCADE, blank=True, null=True, default=None
     )
 
     def __str__(self):
