@@ -1,6 +1,7 @@
 from django.test import TestCase, Client, RequestFactory
 from unittest.mock import patch, MagicMock
 from rest_framework import status
+from rest_framework.test import APIClient
 from accounts.views import KakaoCallback
 from accounts.models import User, Follow
 from rest_framework.test import APIClient
@@ -124,6 +125,38 @@ class KakaoCallbackTest(TestCase):
         self.assertEqual(response.data["message"], "로그인 완료")
 
 
+class UserProfileViewTest(TestCase):
+    """UserProfileView 뷰에 대한 테스트 케이스"""
+
+    def setUp(self):
+        """테스트 케이스의 공통 설정 처리"""
+        self.client = APIClient()
+        self.user = User.objects.create(
+            social_type="kakao",
+            social_id="kakao_12345",
+            email="user@email.com",
+            nickname="user",
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_user_profile(self):
+        """UserProfileView 뷰가 정상적으로 회원 정보를 반환하는지 테스트"""
+        response = self.client.get(f"/users/{self.user.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["nickname"], "user")
+        self.assertEqual(response.data["bio"], None)
+
+    def test_user_profile_update(self):
+        """UserProfileView 뷰가 정상적으로 회원 정보를 수정하는지 테스트"""
+        data = {
+            "nickname": "new_nickname",
+            "bio": "new_bio",
+        }
+        response = self.client.patch(f"/users/{self.user.id}", data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["nickname"], "new_nickname")
+        self.assertEqual(response.data["bio"], "new_bio")
+        
 class FollowingTest(TestCase):
     def setUp(self):
         # 테스트를 위한 유저 생성
