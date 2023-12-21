@@ -327,3 +327,23 @@ class UserProfileView(GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# swagger
+from drf_spectacular.utils import extend_schema
+class UserSearch(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    """사용자 검색"""
+
+    @extend_schema(
+        methods=["GET"],
+        tags=["사용자"],
+        summary="사용자 닉네임 검색",
+        description="사용자 닉네임으로 정보를 검색합니다",
+    )
+    def get(self, request):
+        # 사용자 검색
+        # 알파벳, 가나다 순으로 정렬
+        nickname = request.query_params.get("nickname")
+        users = User.objects.filter(nickname__icontains=nickname).order_by("nickname")
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)

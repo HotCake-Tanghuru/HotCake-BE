@@ -21,12 +21,8 @@ from trends.models import TrendItem, Trend
 from accounts.models import User, Like
 
 # swagger
-from drf_spectacular.utils import (
-    extend_schema,
-    inline_serializer,
-    OpenApiParameter,
-    OpenApiTypes
-)
+from drf_spectacular.utils import extend_schema
+
 
 class PostTrendMissionView(APIView):
     """트렌드 인증 미션 생성"""
