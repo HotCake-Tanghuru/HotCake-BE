@@ -1,6 +1,6 @@
 # HotCake-BE
 서비스: 핫케이크 백엔드 개발 레포지토리
-
+노션: https://curved-bonnet-0c4.notion.site/02f7c45d8b764c719ff4f2d86020f703?pvs=4
 
 ### 2.3 URL 구조
 - 인증/인가
