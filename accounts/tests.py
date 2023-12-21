@@ -255,3 +255,25 @@ class FollowerTest(TestCase):
             f"/users/{self.user.id}/followers", {"follower_user_id": self.user2.id}
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+class SearchByNicknameTest(TestCase):
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@",
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 닉네임으로 유저 검색 테스트
+    def test_search_by_nickname(self):      
+
+        response = self.client.get(f"/users/test")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
