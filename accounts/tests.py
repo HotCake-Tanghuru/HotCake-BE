@@ -3,7 +3,8 @@ from unittest.mock import patch, MagicMock
 from rest_framework import status
 from rest_framework.test import APIClient
 from accounts.views import KakaoCallback
-from accounts.models import User
+from accounts.models import User, Follow
+from rest_framework.test import APIClient
 
 
 class KakaoLoginTest(TestCase):
@@ -25,6 +26,9 @@ class KakaoLoginTest(TestCase):
 class KakaoCallbackTest(TestCase):
     """KakaoCallback 뷰에 대한 테스트 케이스"""
 
+    # views.py에서
+    # request.session["kakao_access_token"] = kakao_access_token 부분을 지우고 테스트 수행!
+    # 테스트 수행 후 다시 복구할 것!
     def setUp(self):
         """테스트 케이스의 공통 설정 처리"""
         self.factory = RequestFactory()
@@ -152,3 +156,102 @@ class UserProfileViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["nickname"], "new_nickname")
         self.assertEqual(response.data["bio"], "new_bio")
+        
+class FollowingTest(TestCase):
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@",
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 테스트를 위한 다른 유저 생성
+        self.user2 = User.objects.create_user(
+            "kakao2",
+            "1234567892",
+            "test2@gmail.com",
+            "testuser2",
+            "testprofileimg",
+            "testbio2",
+            "123456789@2",
+        )
+
+    # 팔로잉 목록 조회 테스트
+    def test_following_list(self):
+        # 팔로잉 목록 조회
+        response = self.client.get(f"/users/{self.user.id}/following")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # 팔로잉 목록 조회 실패 테스트 - 존재하지 않는 유저
+    def test_following_list_fail(self):
+        # 팔로잉 목록 조회
+        response = self.client.get(f"/users/-2/following")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class FollowerTest(TestCase):
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@",
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 테스트를 위한 다른 유저 생성
+        self.user2 = User.objects.create_user(
+            "kakao2",
+            "1234567892",
+            "test2@gmail.com",
+            "testuser2",
+            "testprofileimg",
+            "testbio2",
+            "123456789@2",
+        )
+
+    # 팔로워 목록 조회 테스트
+    def test_follower_list(self):
+        # 팔로워 데이터 생성
+        Follow.objects.create(from_user=self.user2, to_user=self.user)
+        # 팔로워 목록 조회
+        response = self.client.get(f"/users/{self.user.id}/followers")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # 팔로워 목록 조회 실패 테스트 - 존재하지 않는 유저
+    def test_follower_list_fail(self):
+        # 팔로워 목록 조회
+        response = self.client.get(f"/users/-2/followers")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # 팔로워 삭제 테스트
+    def test_follower_delete(self):
+        # 팔로워 데이터 생성
+        Follow.objects.create(from_user=self.user2, to_user=self.user)
+        # 팔로워 삭제
+        response = self.client.delete(
+            f"/users/{self.user.id}/followers", {"follower_user_id": self.user2.id}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # 팔로워 삭제 실패 테스트 - 없는 팔로우 데이터
+    def test_follower_delete_fail(self):
+        # 팔로워 삭제
+        response = self.client.delete(
+            f"/users/{self.user.id}/followers", {"follower_user_id": self.user2.id}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
