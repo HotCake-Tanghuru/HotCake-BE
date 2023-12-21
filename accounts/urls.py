@@ -6,6 +6,7 @@ from accounts.views import (
     KakaoLogoutCallback,
     KakaoUnlink,
     FollowingView,
+    FollowerView,
 )
 
 urlpatterns = [
@@ -20,5 +21,5 @@ urlpatterns = [
     path("oauth/kakao/unlink/", KakaoUnlink.as_view(), name="kakao_unlink"),
 
     path("users/<int:user_id>/following", FollowingView.as_view(), name="following"),
-    
+    path("users/<int:user_id>/followers", FollowerView.as_view(), name="followers"),
 ]

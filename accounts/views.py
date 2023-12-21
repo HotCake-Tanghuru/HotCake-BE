@@ -252,3 +252,46 @@ class FollowingView(APIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+class FollowerView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FollowSerializer
+    """팔로워 목록 조회"""
+
+    def get(self, request, user_id):
+        # 사용자 확인
+        if not User.objects.filter(id=user_id).exists():
+            return Response(
+                {"message": "사용자가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user = User.objects.get(id=user_id)
+        # 팔로워 목록 조회
+        follower_list = Follow.objects.filter(to_user=user)
+        # 팔로워 목록과 사용자의 정보를 반환
+        serializer = self.serializer_class(follower_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    """팔로워 삭제"""
+
+    def delete(self, request, user_id):
+        # 팔로워 확인
+        follower_id = request.data.get("follower_user_id")
+        if not User.objects.filter(id=follower_id).exists():
+            return Response(
+                {"message": "팔로워가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        follower = User.objects.get(id=follower_id)
+        # 팔로워 데이터 확인
+        if not Follow.objects.filter(from_user=follower, to_user=user_id).exists():
+            return Response(
+                {"message": "팔로워 데이터가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # 팔로워 삭제
+        Follow.objects.filter(from_user=follower, to_user=user_id).delete()
+        return Response(
+            {"message": "팔로워 삭제 완료"},
+            status=status.HTTP_200_OK,
+        )
