@@ -32,14 +32,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # apps
-    "accounts",
-    "trends",
-    "trend_missions",
     # django-rest-framework
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    # swagger
+    'drf_spectacular',
+    # apps
+    "accounts",
+    "trends",
+    "trend_missions",
 ]
 
 MIDDLEWARE = [
@@ -63,6 +65,19 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (  # Authenticationt 설정
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'AUTHENTICATION_SCHEME_NAMES': {
+        'rest_framework_simplejwt.authentication.JWTAuthentication': 'bearer',
+    },
+    # 기타 설정...
+    'TITLE': '핫 케이크 API 테스트 페이지',           
+    'DESCRIPTION': 'oauth/kakao/login 페이지에서 로그인 후, access_token을 오른쪽에 있는 Authorize 버튼에 입력하면 테스트 가능합니다.',     
+    'VERSION': '1.0.0',   
+    # 이미지 파일 업로드
+    'COMPONENT_SPLIT_REQUEST': True 
 }
 
 REST_USE_JWT = True
