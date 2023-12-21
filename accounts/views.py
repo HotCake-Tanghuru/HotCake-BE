@@ -342,7 +342,7 @@ class UserSearch(APIView):
     )
     def get(self, request, nickname):
         # 사용자 검색
-        nickname = nickname
-        users = User.objects.filter(nickname__icontains=nickname)
+        # 알파벳, 가나다 순으로 정렬
+        users = User.objects.filter(nickname__icontains=nickname).order_by("nickname")
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
