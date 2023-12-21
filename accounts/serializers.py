@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers, exceptions
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from .models import User, Like
+from .models import User, Like, Follow
 
 
 class UserSerializer(serializers.Serializer):
@@ -52,3 +52,13 @@ class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
         fields = ["id", "user", "trend", "trend_mission"]
+
+class FollowSerializer(serializers.ModelSerializer):
+    user_info = UserSerializer(source="to_user", read_only=True)
+    class Meta:
+        model = Follow
+        fields = ["id", "from_user", "to_user", "user_info"]
+    
+    def create(self, validated_data):
+        follow = Follow.objects.create(**validated_data)
+        return follow

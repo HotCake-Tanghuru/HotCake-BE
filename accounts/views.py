@@ -10,8 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
-from .serializers import UserSerializer, LogoutSerializer
+from .models import User, Follow
+from .serializers import UserSerializer, LogoutSerializer, FollowSerializer
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -189,3 +189,66 @@ class KakaoUnlink(APIView):
         user.delete()
 
         return Response(status=status.HTTP_200_OK)
+
+
+class FollowingView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FollowSerializer
+    """팔로잉 목록 조회"""
+
+    def get(self, request, user_id):
+        # 사용자 확인
+        if not User.objects.filter(id=user_id).exists():
+            return Response(
+                {"message": "사용자가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user = User.objects.get(id=user_id)
+        # 팔로잉 목록 조회
+        following_list = Follow.objects.filter(from_user=user)
+        # 팔로잉 목록과 사용자의 정보를 반환
+        serializer = self.serializer_class(following_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    """팔로잉 추가"""
+
+    def patch(self, request, user_id):
+        # 사용자 확인
+        if not User.objects.filter(id=user_id).exists():
+            return Response(
+                {"message": "사용자가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user = User.objects.get(id=user_id)
+
+        # 팔로잉 대상 확인
+        following_user_id = request.data.get("following_user_id")
+        if not User.objects.filter(id=following_user_id).exists():
+            return Response(
+                {"message": "팔로잉 대상이 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # 팔로잉 대상이 본인인 경우
+        if user_id == following_user_id:
+            return Response(
+                {"message": "본인을 팔로잉 할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        following_user = User.objects.get(id=following_user_id)
+
+        # 이미 팔로잉 중이라면, 팔로잉 취소
+        if Follow.objects.filter(from_user=user, to_user=following_user).exists():
+            Follow.objects.filter(from_user=user, to_user=following_user).delete()
+            return Response(
+                {"message": "팔로잉 취소 완료"},
+                status=status.HTTP_200_OK,
+            )
+
+        # 팔로잉 추가
+        following = Follow.objects.create(from_user=user, to_user=following_user)
+        serializer = self.serializer_class(following)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )

@@ -2,8 +2,8 @@ from django.test import TestCase, Client, RequestFactory
 from unittest.mock import patch, MagicMock
 from rest_framework import status
 from accounts.views import KakaoCallback
-from accounts.models import User
-
+from accounts.models import User, Follow
+from rest_framework.test import APIClient
 
 class KakaoLoginTest(TestCase):
     """KakaoLogin 뷰에 대한 테스트 케이스"""
@@ -23,7 +23,9 @@ class KakaoLoginTest(TestCase):
 
 class KakaoCallbackTest(TestCase):
     """KakaoCallback 뷰에 대한 테스트 케이스"""
-
+    # views.py에서 
+    # request.session["kakao_access_token"] = kakao_access_token 부분을 지우고 테스트 수행!
+    # 테스트 수행 후 다시 복구할 것!
     def setUp(self):
         """테스트 케이스의 공통 설정 처리"""
         self.factory = RequestFactory()
@@ -118,3 +120,43 @@ class KakaoCallbackTest(TestCase):
 
         # 'message'가 '로그인 완료'인지 확인
         self.assertEqual(response.data["message"], "로그인 완료")
+
+
+class FollowingTest(TestCase):
+    def setUp(self):
+        # 테스트를 위한 유저 생성
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            "kakao",
+            "123456789",
+            "test@gmail.com",
+            "testuser",
+            "testprofileimg",
+            "testbio",
+            "123456789@"
+        )
+        # 테스트 클라이언트 인증 방식
+        self.client.force_authenticate(user=self.user)
+
+        # 테스트를 위한 다른 유저 생성
+        self.user2 = User.objects.create_user(
+            "kakao2",
+            "1234567892",
+            "test2@gmail.com",
+            "testuser2",
+            "testprofileimg",
+            "testbio2",
+            "123456789@2"
+        )
+
+    # 팔로잉 목록 조회 테스트
+    def test_following_list(self):
+        # 팔로잉 목록 조회
+        response = self.client.get(f"/users/{self.user.id}/following")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    # 팔로잉 목록 조회 실패 테스트 - 존재하지 않는 유저
+    def test_following_list_fail(self):
+        # 팔로잉 목록 조회
+        response = self.client.get(f"/users/-2/following")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
