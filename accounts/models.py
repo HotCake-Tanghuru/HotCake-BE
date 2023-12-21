@@ -62,7 +62,7 @@ class User(AbstractUser):
     email = models.EmailField(max_length=100, unique=True, verbose_name="이메일")
     nickname = models.CharField(max_length=200, verbose_name="닉네임")
     profile_img = models.ImageField(
-        upload_to="media/image/profile/", blank=True, null=True, verbose_name="프로필 사진"
+        upload_to="image/profile/", blank=True, verbose_name="프로필 사진"
     )
     bio = models.TextField(blank=True, null=True, verbose_name="자기소개")
     username = None

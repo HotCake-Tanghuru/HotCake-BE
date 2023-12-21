@@ -2,16 +2,18 @@ import environ
 from pathlib import Path
 import requests
 
-
-from django.shortcuts import redirect
+from django.contrib.auth import get_user_model
+from django.shortcuts import redirect, get_object_or_404
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import UserSerializer, LogoutSerializer
+from .serializers import UserSerializer, LogoutSerializer, UserProfileSerializer
+from .permissions import IsOwnerOrReadOnly
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -189,3 +191,31 @@ class KakaoUnlink(APIView):
         user.delete()
 
         return Response(status=status.HTTP_200_OK)
+
+
+class UserProfileView(GenericAPIView):
+    # 인증된 사용자만 접근 가능하고, 소유자만 수정 가능하도록 설정
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    serializer_class = UserProfileSerializer
+
+    def get_object(self):
+        """URL에서 pk를 가져와 해당하는 User 인스턴스 반환"""
+        pk = self.kwargs.get("pk")
+        return get_object_or_404(get_user_model(), pk=pk)
+
+    def get(self, request, *args, **kwargs):
+        """프로필 조회"""
+        instance = self.get_object()
+        self.check_object_permissions(request, instance)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        """프로필 수정"""
+        instance = self.get_object()
+        self.check_object_permissions(self.request, instance)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
