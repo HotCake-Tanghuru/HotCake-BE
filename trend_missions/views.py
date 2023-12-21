@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.views import APIView
 
 # serializers
 from .serializers import (
@@ -28,7 +28,7 @@ from drf_spectacular.utils import (
     OpenApiTypes
 )
 
-class PostTrendMissionView(GenericAPIView):
+class PostTrendMissionView(APIView):
     """트렌드 인증 미션 생성"""
     @extend_schema(
         methods=["POST"],
@@ -73,7 +73,7 @@ class PostTrendMissionView(GenericAPIView):
         return Response(result, status=200)
 
 
-class TrendMissionListView(GenericAPIView):
+class TrendMissionListView(APIView):
     """사용자의 트렌드 미션 리스트 조회"""
     @extend_schema(
         methods=["GET"],
@@ -88,7 +88,7 @@ class TrendMissionListView(GenericAPIView):
         return Response(serializer.data, status=200)
 
 
-class TrendMissionDetailView(GenericAPIView):
+class TrendMissionDetailView(APIView):
     """트렌드 미션 상세 조회"""
     @extend_schema(
         methods=["GET"],
@@ -124,7 +124,7 @@ class TrendMissionDetailView(GenericAPIView):
         return Response(result, status=200)
 
 
-class TrendMissionItemUpdateView(GenericAPIView):
+class TrendMissionItemUpdateView(APIView):
     """트렌드 아이템 수정"""
     @extend_schema(
         methods=["PATCH"],
@@ -148,7 +148,7 @@ class TrendMissionItemUpdateView(GenericAPIView):
             return Response(serializer.data, status=200)
 
 
-class CheckMissionCompleteView(GenericAPIView):
+class CheckMissionCompleteView(APIView):
     @extend_schema(
         methods=["PATCH"],
         tags=["트렌드 미션"],
@@ -188,7 +188,7 @@ class CheckMissionCompleteView(GenericAPIView):
         return Response(serializer.data, status=200)
 
 
-class StampDetailView(GenericAPIView):
+class StampDetailView(APIView):
     @extend_schema(
         methods=["GET"],
         tags=["트렌드 미션"],
@@ -218,7 +218,7 @@ class StampDetailView(GenericAPIView):
         return Response(result, status=200)
 
 
-class StampListView(GenericAPIView):
+class StampListView(APIView):
     """스탬프 리스트 조회"""
     @extend_schema(
         methods=["GET"],
@@ -238,7 +238,7 @@ class StampListView(GenericAPIView):
 class CommentUpdateSerializer(serializers.Serializer):
     comment_id = serializers.IntegerField()
     content = serializers.CharField()
-class CommentView(GenericAPIView):
+class CommentView(APIView):
     """댓글 작성"""
     @extend_schema(
         methods=["POST"],
@@ -324,7 +324,7 @@ class CommentView(GenericAPIView):
         return Response("댓글이 삭제되었습니다.", status=200)
         
 # 대댓글
-class CommentReply(GenericAPIView):
+class CommentReply(APIView):
     """대댓글 작성"""
     @extend_schema(
         methods=["POST"],
@@ -411,15 +411,15 @@ class CommentReply(GenericAPIView):
         return Response("대댓글이 삭제되었습니다.", status=200)
 
 
-class TrendMissionLikeView(GenericAPIView):
+class TrendMissionLikeView(APIView):
     """트렌드 미션 좋아요"""
     @extend_schema(
-        methods=["PUT"],
+        methods=["PATCH"],
         tags=["트렌드 미션"],
         summary="미션 페이지 좋아요",
         description="미션 페이지에 좋아요를 등록하는 기능입니다. 해당하는 미션페이지의 id값을 넣어주세요.",
     )
-    def put(self, request, trend_mission_id):
+    def patch(self, request, trend_mission_id):
         # 트렌드 미션 존재 여부 확인
         if not TrendMission.objects.filter(pk=trend_mission_id).exists():
             return Response("존재하지 않는 트렌드 미션입니다.", status=404)
