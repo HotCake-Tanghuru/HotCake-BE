@@ -428,7 +428,7 @@ class StampDetailAPITest(TestCase):
 
     # 스탬프 상세 조회 성공 테스트
     def test_StampDetail(self):
-        response = self.client.get(f"/trend-missions/users/stamp/{self.user.id}")
+        response = self.client.get(f"/trend-missions/users/stamp/{self.stamp.id}")
         self.assertEqual(response.status_code, 200)
 
     # 스탬프 상세 조회 실패 테스트
