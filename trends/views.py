@@ -3,7 +3,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from .models import Trend, TrendItem
-from accounts.models import Follow, Like
+from accounts.models import User, Follow, Like
 from trend_missions.models import UserTrendItem
 
 from .serializers import TrendSerializer, TrendItemSerializer, TrendViewCountSerializer
@@ -133,3 +133,22 @@ class TrendLikeView(GenericAPIView):
             trend.save()
 
             return Response(LikeSerializer(like).data, status=200)
+
+class TrendLikeListView(GenericAPIView):
+    """사용자가 좋아요한 트렌드 목록 조회"""
+
+    def get(self, request, user_id):
+        user = User.objects.get(id=user_id)
+        user_like_list = Like.objects.filter(user=user)
+
+        liked_trend_id = user_like_list.values_list("trend_id", flat=True)
+
+        trends = Trend.objects.filter(id__in=liked_trend_id)
+        trend_serializer = TrendSerializer(trends, many=True)
+        result = trend_serializer.data
+
+        for trend in result:
+            trend_items = TrendItem.objects.filter(trend__id=trend["id"])
+            trend["trend_item"] = TrendItemSerializer(trend_items, many=True).data
+
+        return Response(result, status=200)
