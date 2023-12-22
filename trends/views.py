@@ -6,6 +6,9 @@ from .models import Trend, TrendItem
 from accounts.models import User, Follow, Like
 from trend_missions.models import UserTrendItem, TrendMission
 
+from .serializers import TrendSerializer, TrendItemSerializer, TrendViewCountSerializer
+from accounts.serializers import UserSerializer, LikeSerializer
+
 from .serializers import (
     TrendSerializer,
     TrendItemSerializer,
@@ -138,10 +141,6 @@ class TrendLikeListView(GenericAPIView):
     def get(self, request, user_id):
         user = User.objects.get(id=user_id)
         user_like_list = Like.objects.filter(user=user)
-
-        # 아직 좋아요한 트렌드가 없는 경우
-        if not user_like_list:
-            return Response({"message": "아직 좋아요한 트렌드가 없습니다."}, status=200)
 
         liked_trend_id = user_like_list.values_list("trend_id", flat=True)
 
