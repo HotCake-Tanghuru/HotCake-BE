@@ -244,7 +244,7 @@ class FollowerTest(TestCase):
         Follow.objects.create(from_user=self.user2, to_user=self.user)
         # 팔로워 삭제
         response = self.client.delete(
-            f"/users/{self.user.id}/followers", {"follower_user_id": self.user2.id}
+            f"/users/{self.user2.id}/followers"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -252,7 +252,7 @@ class FollowerTest(TestCase):
     def test_follower_delete_fail(self):
         # 팔로워 삭제
         response = self.client.delete(
-            f"/users/{self.user.id}/followers", {"follower_user_id": self.user2.id}
+            f"/users/{self.user2.id}/followers"
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -275,5 +275,5 @@ class SearchByNicknameTest(TestCase):
         # 닉네임으로 유저 검색 테스트
     def test_search_by_nickname(self):      
 
-        response = self.client.get(f"/users/test")
+        response = self.client.get(f"/users/search?nickname=testuser")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
