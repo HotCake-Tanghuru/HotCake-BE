@@ -17,6 +17,14 @@ environ.Env.read_env(env_file=BASE_DIR / ".env")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+# DATABASES Related
+DATABASES_ENGINE=env("DATABASES_ENGINE")
+DATABASES_NAME=env("DATABASES_NAME")
+DATABASES_USER=env("DATABASES_USER")
+DATABASES_PASSWORD=env("DATABASES_PASSWORD")
+DATABASES_HOST=env("DATABASES_HOST")
+DATABASES_PORT=env("DATABASES_PORT")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
@@ -110,12 +118,16 @@ WSGI_APPLICATION = "hotcake.wsgi.application"
 
 
 # Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# postgresql 연결
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+    'ENGINE': DATABASES_ENGINE,
+    'NAME': DATABASES_NAME,
+    'USER': DATABASES_USER,
+    'PASSWORD': DATABASES_PASSWORD,
+    'HOST': DATABASES_HOST,
+    'PORT': DATABASES_PORT,
     }
 }
 
