@@ -17,10 +17,17 @@ from .serializers import (
 )
 from accounts.serializers import UserSerializer, LikeSerializer
 
+# swagger
+from drf_spectacular.utils import extend_schema
 
 class TrendView(GenericAPIView):
     """핫 트렌드 페이지 조회"""
-
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드"],
+        summary="핫 트렌드 페이지 조회",
+        description="핫 트렌드 페이지를 조회합니다. ",
+    )
     def get(self, request):
         # 핫 트렌드 조회
         trends = Trend.objects.all()
@@ -64,7 +71,12 @@ class TrendView(GenericAPIView):
 
 class TrendDetailView(GenericAPIView):
     """트렌드 상세 조회"""
-
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드"],
+        summary="트렌드 상세 조회",
+        description="트렌드 정보를 상세 조회합니다. trend_id값을 넣어 요청합니다. ",
+    )
     def get(self, request, trend_id):
         # 페이지 조회수 증가
         trend = get_object_or_404(Trend, id=trend_id)
@@ -116,7 +128,12 @@ class TrendDetailView(GenericAPIView):
 
 class TrendLikeView(GenericAPIView):
     """트렌드 좋아요"""
-
+    @extend_schema(
+        methods=["PATCH"],
+        tags=["트렌드"],
+        summary="트렌드 좋아요",
+        description="해당하는 트렌드에 좋아요를 추가합니다. trend_id값을 넣어 요청합니다. ",
+    )
     def patch(self, request, trend_id):
         user = request.user
         trend = get_object_or_404(Trend, id=trend_id)
@@ -137,10 +154,19 @@ class TrendLikeView(GenericAPIView):
 
 class TrendLikeListView(GenericAPIView):
     """사용자가 좋아요한 트렌드 목록 조회"""
-
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드"],
+        summary="트렌드 목록 조회",
+        description="사용자의 트렌드 목록을 조회합니다. 사용자의 user_id값을 넣어 요청합니다. ",
+    )
     def get(self, request, user_id):
         user = User.objects.get(id=user_id)
         user_like_list = Like.objects.filter(user=user)
+
+        # 아직 좋아요한 트렌드가 없는 경우
+        if not user_like_list:
+            return Response({"message": "아직 좋아요한 트렌드가 없습니다."}, status=200)
 
         liked_trend_id = user_like_list.values_list("trend_id", flat=True)
 
