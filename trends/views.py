@@ -3,8 +3,11 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from .models import Trend, TrendItem
-from accounts.models import Follow
+from accounts.models import Follow, Like
 from trend_missions.models import UserTrendItem
+
+from .serializers import TrendSerializer, TrendItemSerializer, TrendViewCountSerializer
+from accounts.serializers import UserSerializer, LikeSerializer
 
 from .serializers import (
     TrendSerializer,
@@ -73,6 +76,10 @@ class TrendDetailView(GenericAPIView):
         trend_item = TrendItem.objects.filter(trend=trend_id)
         trend_item_serializer = TrendItemSerializer(trend_item, many=True)
 
+        # 좋아요 데이터 조회
+        like_list = Like.objects.filter(trend=trend_id)
+        like_list_serializer = LikeSerializer(like_list, many=True)
+
         # 해당 트렌드에 참여 중인 친구 조회
         user = request.user
         follow_list = Follow.objects.filter(from_user=user)
@@ -87,6 +94,8 @@ class TrendDetailView(GenericAPIView):
 
         result = {
             "trend_view_count": trend_view_serializer.data,
+            "like_count": like_list.count(),
+            "like_list": like_list_serializer.data,
             "trend_item": trend_item_serializer.data,
             "users_with_trend": [],
         }
@@ -103,3 +112,24 @@ class TrendDetailView(GenericAPIView):
             result["users_with_trend"] = users_serializer.data
 
         return Response(result, status=200)
+
+
+class TrendLikeView(GenericAPIView):
+    """트렌드 좋아요"""
+
+    def patch(self, request, trend_id):
+        user = request.user
+        trend = get_object_or_404(Trend, id=trend_id)
+        like = Like.objects.filter(user=user, trend=trend)
+
+        # 이미 좋아요가 있는 경우 좋아요 취소 처리
+        if like.exists():
+            like.first().delete()
+            trend.save()
+            return Response({"message": "좋아요 취소"}, status=200)
+        # 좋아요가 없는 경우 좋아요 처리
+        else:
+            like = Like.objects.create(user=user, trend=trend)
+            trend.save()
+
+            return Response(LikeSerializer(like).data, status=200)
