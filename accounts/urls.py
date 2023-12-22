@@ -13,7 +13,6 @@ urlpatterns = [
         name="kakao_logout_callback",
     ),
     path("oauth/kakao/unlink/", views.KakaoUnlink.as_view(), name="kakao_unlink"),
-    path("oauth/kakao/unlink/", views.KakaoUnlink.as_view(), name="kakao_unlink"),
     path("users/<int:pk>", views.UserProfileView.as_view(), name="user_detail"),
     path("users/<int:user_id>/following", views.FollowingView.as_view(), name="following"),
     path("users/<int:user_id>/followers", views.FollowerView.as_view(), name="followers"),

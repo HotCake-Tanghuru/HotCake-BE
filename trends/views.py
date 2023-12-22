@@ -134,7 +134,6 @@ class TrendLikeView(GenericAPIView):
 
             return Response(LikeSerializer(like).data, status=200)
 
-
 class TrendLikeListView(GenericAPIView):
     """사용자가 좋아요한 트렌드 목록 조회"""
 

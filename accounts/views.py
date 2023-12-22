@@ -12,8 +12,16 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User, Follow
-from .serializers import UserSerializer, LogoutSerializer, UserProfileSerializer, FollowSerializer
+from .serializers import (
+    UserSerializer,
+    LogoutSerializer,
+    UserProfileSerializer,
+    FollowSerializer,
+)
 from .permissions import IsOwnerOrReadOnly
+
+# swagger
+from drf_spectacular.utils import extend_schema
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +39,11 @@ kakao_unlink_uri = "https://kapi.kakao.com/v1/user/unlink"
 class KakaoLogin(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["로그인"],
+        summary="카카오 로그인",
+        description="oauth/kakao/login/ 으로 이동하여 로그인합니다.",
+    )
     def get(self, request):
         """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
         client_id = env("KAKAO_REST_API_KEY")
@@ -43,7 +56,8 @@ class KakaoLogin(APIView):
 class KakaoCallback(APIView):
     permission_classes = [AllowAny]
     serializer_class = UserSerializer
-
+    
+    @extend_schema(exclude=True)
     def get(self, request):
         """access_token과 회원정보를 요청"""
         # access_token 요청
@@ -140,6 +154,11 @@ class KakaoCallback(APIView):
 class KakaoLogout(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        tags=["로그인"],
+        summary="카카오 로그아웃",
+        description="oauth/kakao/logout/ 으로 이동하여 로그아웃 합니다.",
+    )
     def get(self, request):
         """카카오계정과 함께 로그아웃"""
         client_id = env("KAKAO_REST_API_KEY")
@@ -153,6 +172,7 @@ class KakaoLogoutCallback(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
 
+    @extend_schema(exclude=True)
     def post(self, request):
         """JWT 토큰을 블랙리스트에 추가"""
         serializer = self.serializer_class(data=request.data)
@@ -166,6 +186,11 @@ class KakaoLogoutCallback(APIView):
 class KakaoUnlink(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        tags=["로그인"],
+        summary="회원 탈퇴",
+        description="oauth/kakao/unlink/ 으로 이동하여 회원 탈퇴합니다.",
+    )
     def delete(self, request):
         """카카오계정과 함께 회원탈퇴"""
         kakao_access_token = request.session.get("kakao_access_token")
@@ -194,12 +219,17 @@ class KakaoUnlink(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-
 class FollowingView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = FollowSerializer
     """팔로잉 목록 조회"""
 
+    @extend_schema(
+        methods=["GET"],
+        tags=["사용자"],
+        summary="팔로잉 조회",
+        description="해당 사용자의 팔로잉 목록을 조회합니다. user_id로 검색합니다.",
+    )
     def get(self, request, user_id):
         # 사용자 확인
         if not User.objects.filter(id=user_id).exists():
@@ -216,6 +246,12 @@ class FollowingView(APIView):
 
     """팔로잉 추가"""
 
+    @extend_schema(
+        methods=["PATCH"],
+        tags=["사용자"],
+        summary="팔로잉 추가&삭제",
+        description="해당 사용자를 팔로잉합니다. user_id로 팔로잉할 유저를 입력합니다.",
+    )
     def patch(self, request, user_id):
         # 사용자 확인
         if not User.objects.filter(id=user_id).exists():
@@ -223,23 +259,22 @@ class FollowingView(APIView):
                 {"message": "사용자가 존재하지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        user = User.objects.get(id=user_id)
+        user = request.user
 
         # 팔로잉 대상 확인
-        following_user_id = request.data.get("following_user_id")
-        if not User.objects.filter(id=following_user_id).exists():
+        if not User.objects.filter(id=user_id).exists():
             return Response(
                 {"message": "팔로잉 대상이 존재하지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # 팔로잉 대상이 본인인 경우
-        if user_id == following_user_id:
+        if user.id == user_id:
             return Response(
                 {"message": "본인을 팔로잉 할 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        following_user = User.objects.get(id=following_user_id)
+        following_user = User.objects.get(id=user_id)
 
         # 이미 팔로잉 중이라면, 팔로잉 취소
         if Follow.objects.filter(from_user=user, to_user=following_user).exists():
@@ -257,11 +292,18 @@ class FollowingView(APIView):
             status=status.HTTP_200_OK,
         )
 
+
 class FollowerView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = FollowSerializer
     """팔로워 목록 조회"""
 
+    @extend_schema(
+        methods=["GET"],
+        tags=["사용자"],
+        summary="팔로워 조회",
+        description="해당 사용자의 팔로워를 조회합니다. user_id로 검색합니다.",
+    )
     def get(self, request, user_id):
         # 사용자 확인
         if not User.objects.filter(id=user_id).exists():
@@ -275,30 +317,43 @@ class FollowerView(APIView):
         # 팔로워 목록과 사용자의 정보를 반환
         serializer = self.serializer_class(follower_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     """팔로워 삭제"""
 
+    @extend_schema(
+        methods=["DELETE"],
+        tags=["사용자"],
+        summary="팔로워 삭제",
+        description="팔로워를 삭제합니다. user_id로 삭제할 유저를 입력합니다.",
+    )
     def delete(self, request, user_id):
+        # 사용자 정보 확인
+        user = request.user
+        if not User.objects.filter(id=user.id).exists():
+            return Response(
+                {"message": "사용자가 존재하지 않습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # 팔로워 확인
-        follower_id = request.data.get("follower_user_id")
-        if not User.objects.filter(id=follower_id).exists():
+        if not User.objects.filter(id=user_id).exists():
             return Response(
                 {"message": "팔로워가 존재하지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        follower = User.objects.get(id=follower_id)
+        follower = User.objects.get(id=user_id)
         # 팔로워 데이터 확인
-        if not Follow.objects.filter(from_user=follower, to_user=user_id).exists():
+        if not Follow.objects.filter(from_user=follower, to_user=user).exists():
             return Response(
                 {"message": "팔로워 데이터가 존재하지 않습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         # 팔로워 삭제
-        Follow.objects.filter(from_user=follower, to_user=user_id).delete()
+        Follow.objects.filter(from_user=follower, to_user=user).delete()
         return Response(
             {"message": "팔로워 삭제 완료"},
             status=status.HTTP_200_OK,
         )
+
 
 class UserProfileView(GenericAPIView):
     # 인증된 사용자만 접근 가능하고, 소유자만 수정 가능하도록 설정
@@ -310,6 +365,12 @@ class UserProfileView(GenericAPIView):
         pk = self.kwargs.get("pk")
         return get_object_or_404(get_user_model(), pk=pk)
 
+    @extend_schema(
+        methods=["GET"],
+        tags=["사용자"],
+        summary="프로필 조회",
+        description="프로필을 조회합니다.",
+    )
     def get(self, request, *args, **kwargs):
         """프로필 조회"""
         instance = self.get_object()
@@ -317,6 +378,13 @@ class UserProfileView(GenericAPIView):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @extend_schema(
+        methods=["PATCH"],
+        tags=["사용자"],
+        summary="프로필 수정",
+        description="프로필을 수정합니다. multipart/form 형식으로 전송합니다.",
+        request=UserProfileSerializer,
+    )
     def patch(self, request, *args, **kwargs):
         """프로필 수정"""
         instance = self.get_object()
@@ -327,8 +395,7 @@ class UserProfileView(GenericAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# swagger
-from drf_spectacular.utils import extend_schema
+
 class UserSearch(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer

@@ -1,10 +1,11 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
-from accounts.models import User
+
 from django.contrib.auth.models import User
 from .models import Trend, TrendItem
 from accounts.models import User, Like
 from .serializers import TrendSerializer, TrendItemSerializer
+
 
 
 class TrendLikeViewTest(TestCase):
