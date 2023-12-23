@@ -35,17 +35,6 @@ jobs:
             git pull origin develop
             
             echo "SECRET_KEY=\"${{ secrets.SECRET_KEY }}\"" > .env
-            echo "DEBUG=\"${{ secrets.DEBUG }}\"" >> .env
-            echo "DATABASES_ENGINE=\"${{ secrets.DATABASES_ENGINE }}\"" >> .env
-            echo "DATABASES_NAME=\"${{ secrets.DATABASES_NAME }}\"" >> .env
-            echo "DATABASES_USER=\"${{ secrets.DATABASES_USER }}\"" >> .env
-            echo "DATABASES_PASSWORD=\"${{ secrets.DATABASES_PASSWORD }}\"" >> .env
-            echo "DATABASES_HOST=\"${{ secrets.DATABASES_HOST }}\"" >> .env
-            echo "DATABASES_PORT=\"${{ secrets.DATABASES_PORT }}\"" >> .env
-            echo "KAKAO_REST_API_KEY=\"${{ secrets.KAKAO_REST_API_KEY }}\"" >> .env
-            echo "KAKAO_REDIRECT_URI=\"${{ secrets.KAKAO_REDIRECT_URI }}\"" >> .env
-            echo "KAKAO_CLIENT_SECRET_KEY=\"${{ secrets.KAKAO_CLIENT_SECRET_KEY }}\"" >> .env
-            echo "KAKAO_LOGOUT_REDIRECT_URI=\"${{ secrets.KAKAO_LOGOUT_REDIRECT_URI }}\"" >> .env
             
             source /home/ubuntu/venv/bin/activate
             pip install -r requirements.txt
