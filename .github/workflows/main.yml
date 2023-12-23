@@ -33,7 +33,10 @@ jobs:
             set -e
             cd /home/ubuntu/HotCake-BE
             git pull origin develop
-
+            
+            echo "SECRET_KEY=\"${{ secrets.SECRET_KEY }}\"" > .env
+            echo "DEBUG=\"${{ secrets.DEBUG }}\"" >> .env
+            
             source /home/ubuntu/venv/bin/activate
             pip install -r requirements.txt
             sudo systemctl restart hotcake.service
