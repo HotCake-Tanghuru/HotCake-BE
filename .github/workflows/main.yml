@@ -34,7 +34,7 @@ jobs:
             cd /home/ubuntu/HotCake-BE
             git pull origin develop
 
-            echo "SECRET_KEY=\"${{ secrets.SECRET_KEY }}\"" > .env
+            echo "SECRET_KEY='${{ secrets.SECRET_KEY }}'" >> .env
             echo "DEBUG='${{ secrets.DEBUG }}'" >> .env
             echo "DATABASES_ENGINE=\"${{ secrets.DATABASES_ENGINE }}\"" >> .env
             echo "DATABASES_NAME=\"${{ secrets.DATABASES_NAME }}\"" >> .env
