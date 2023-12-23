@@ -2,9 +2,9 @@ name: Django CI/CD
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "deploy" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "deploy" ]
 
 jobs:
   deploy:
@@ -32,7 +32,7 @@ jobs:
           script: |
             set -e
             cd /home/ubuntu/HotCake-BE
-            git pull origin develop
+            git pull origin deploy
 
             echo "DEBUG='${{ secrets.DEBUG }}'" >> .env
             echo "DATABASES_ENGINE=\"${{ secrets.DATABASES_ENGINE }}\"" >> .env
