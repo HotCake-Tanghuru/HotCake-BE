@@ -181,5 +181,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
-CORS_ORIGIN_ALLOW_ALL = True
-SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+#CORS_ORIGIN_ALLOW_ALL = True
+#SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+CORS_ORIGIN_WHITELIST = (
+        "http://127.0.0.1:5500",
+        "http://127.0.0.1:8000",
+        "http://team-hotcake.s3-website.ap-northeast-2.amazonaws.com",
+)
+CORS_ALLOW_CREDENTIALS = True
