@@ -165,7 +165,6 @@ class KakaoCallback(APIView):
             "refresh_token": refresh_token,
         }
 
-        res = redirect(KAKAO_REDIRECT_URI_FE)
         response = Response(res, status=status.HTTP_200_OK)
         
         return response
