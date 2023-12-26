@@ -415,3 +415,23 @@ class UserSearch(APIView):
         users = User.objects.filter(nickname__icontains=nickname).order_by("nickname")
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
+
+class UserInfo(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    """접속중인 사용자 정보 조회"""
+
+    @extend_schema(
+        methods=["GET"],
+        tags=["사용자"],
+        summary="접속중인 사용자 정보 조회",
+        description="사용자 정보를 조회합니다",
+    )
+    def get(self, request):
+        # 사용자 정보 조회
+        user = request.user
+        res = {
+            "user": UserSerializer(user).data,
+            "user_id": user.id,
+        }
+        return Response(res, status=status.HTTP_200_OK)
