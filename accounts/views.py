@@ -1,6 +1,8 @@
 import environ
 from pathlib import Path
 import requests
+import base64
+import json
 
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect, get_object_or_404
@@ -10,6 +12,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from urllib.parse import urlencode
+from django.http import HttpResponseRedirect
 
 from .models import User, Follow
 from .serializers import (
@@ -35,37 +40,27 @@ kakao_user_uri = "https://kapi.kakao.com/v2/user/me"
 kakao_logout_uri = "https://kauth.kakao.com/oauth/logout"
 kakao_unlink_uri = "https://kapi.kakao.com/v1/user/unlink"
 
-KAKAO_REDIRECT_URI_FE = env("HOTCAKE_URL")
-KAKAO_LOGOUT_REDIRECT_URI_FE = env("HOTCAKE_URL")
+KAKAO_REDIRECT_URI_FE = env("HOTCAKE_INDEX_URL")
+KAKAO_LOGOUT_REDIRECT_URI_FE = env("HOTCAKE_LOGIN_URL")
 
 
+# from dj_rest_auth.registration.views import SocialLoginView
+# from allauth.socialaccount.providers.kakao import views as kakao_view
+# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+
+'''백엔드로 결과값 반환 - 사용자 토큰 확인 및 swagger에서 사용'''
 class KakaoLogin(APIView):
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=["로그인"],
-        summary="카카오 로그인",
-        description="oauth/kakao/login/ 으로 이동하여 로그인합니다.",
-    )
+    @extend_schema(exclude=True)
     def get(self, request):
         """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
         client_id = env("KAKAO_REST_API_KEY")
         redirect_uri = env("KAKAO_REDIRECT_URI")
+        # 로그인 페이지로 이동함
         uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
         res = redirect(uri)
         return res
-    
-class KakaoLoginFE(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
-        client_id = env("KAKAO_REST_API_KEY")
-        redirect_uri = env("KAKAO_REDIRECT_URI")
-        uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
-        res = redirect(uri)
-        return res
-
 
 class KakaoCallback(APIView):
     permission_classes = [AllowAny]
@@ -157,17 +152,31 @@ class KakaoCallback(APIView):
         request.session["access_token"] = access_token
         request.session["refresh_token"] = refresh_token
 
-        res = {
-            "message": message,
-            "user": UserSerializer(user).data,
-            "user_id": user.id,
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
 
-        response = Response(res, status=status.HTTP_200_OK)
-        
-        return response
+        res = Response(
+            {
+                "message": message,
+                "user": UserSerializer(user).data,
+                "user_id": user.id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+            }, status=status.HTTP_200_OK
+        )  
+        return res
+
+'''실제 서비스에 쓰일 api, 프론트엔드로 결과값 반환'''
+class KakaoLoginFE(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(exclude=True)
+    def get(self, request):
+        """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
+        client_id = env("KAKAO_REST_API_KEY")
+        redirect_uri = env("KAKAO_REDIRECT_URI")
+        # 로그인 페이지로 이동함
+        uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+        res = redirect(uri)
+        return res
 
 class KakaoCallbackFE(APIView):
     permission_classes = [AllowAny]
@@ -256,33 +265,34 @@ class KakaoCallbackFE(APIView):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
-        res = {
-            "message": message,
-            "user": UserSerializer(user).data,
-            "user_id": user.id,
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
+        request.session["access_token"] = access_token
+        request.session["refresh_token"] = refresh_token
 
-        # # jwt 토큰 => 쿠키에 저장
-        # res.set_cookie("access", access_token, httponly=True)
-        # res.set_cookie("refresh", refresh_token, httponly=True)
-        response = Response(res, status=status.HTTP_200_OK)
-        return response
-    
+
+        res = {
+                "message": message,
+                "user": UserSerializer(user).data,
+                "user_id": user.id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+        }
+        res_json = json.dumps(res)
+        encoded_res = base64.urlsafe_b64encode(res_json.encode()).decode()
+
+
+        url = KAKAO_REDIRECT_URI_FE + '?' + urlencode({'user_access':encoded_res})
+        
+        return HttpResponseRedirect(url)
+        
 
 class KakaoLogout(APIView):
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=["로그인"],
-        summary="카카오 로그아웃",
-        description="oauth/kakao/logout/ 으로 이동하여 로그아웃 합니다.",
-    )
+    @extend_schema(exclude=True)
     def get(self, request):
         """카카오계정과 함께 로그아웃"""
         client_id = env("KAKAO_REST_API_KEY")
-        logout_redirect_uri = env("KAKAO_LOGOUT_REDIRECT_URI")
+        logout_redirect_uri = KAKAO_LOGOUT_REDIRECT_URI_FE
         uri = f"{kakao_logout_uri}?client_id={client_id}&logout_redirect_uri={logout_redirect_uri}"
 
         response = Response({
@@ -290,14 +300,14 @@ class KakaoLogout(APIView):
             }, 
             status=status.HTTP_202_ACCEPTED
         )
-        response.set_cookie("access", '', httponly=True)
-        response.set_cookie("refresh", '', httponly=True)
+
         res = redirect(uri)
+        
         return res
 
 
 class KakaoLogoutCallback(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = LogoutSerializer
 
     @extend_schema(exclude=True)
@@ -308,7 +318,7 @@ class KakaoLogoutCallback(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         
-        return Response(status=status.HTTP_200_OK)
+        # return Response(status=status.HTTP_200_OK)
 
 
 class KakaoUnlink(APIView):
