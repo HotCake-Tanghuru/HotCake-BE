@@ -1,6 +1,8 @@
 import environ
 from pathlib import Path
 import requests
+import base64
+import json
 
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect, get_object_or_404
@@ -10,6 +12,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from urllib.parse import urlencode
+from django.http import HttpResponseRedirect
 
 from .models import User, Follow
 from .serializers import (
@@ -35,23 +40,27 @@ kakao_user_uri = "https://kapi.kakao.com/v2/user/me"
 kakao_logout_uri = "https://kauth.kakao.com/oauth/logout"
 kakao_unlink_uri = "https://kapi.kakao.com/v1/user/unlink"
 
+KAKAO_REDIRECT_URI_FE = env("HOTCAKE_INDEX_URL")
+KAKAO_LOGOUT_REDIRECT_URI_FE = env("HOTCAKE_LOGIN_URL")
 
+
+# from dj_rest_auth.registration.views import SocialLoginView
+# from allauth.socialaccount.providers.kakao import views as kakao_view
+# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+
+'''백엔드로 결과값 반환 - 사용자 토큰 확인 및 swagger에서 사용'''
 class KakaoLogin(APIView):
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=["로그인"],
-        summary="카카오 로그인",
-        description="oauth/kakao/login/ 으로 이동하여 로그인합니다.",
-    )
+    @extend_schema(exclude=True)
     def get(self, request):
         """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
         client_id = env("KAKAO_REST_API_KEY")
         redirect_uri = env("KAKAO_REDIRECT_URI")
+        # 로그인 페이지로 이동함
         uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
         res = redirect(uri)
         return res
-
 
 class KakaoCallback(APIView):
     permission_classes = [AllowAny]
@@ -140,37 +149,182 @@ class KakaoCallback(APIView):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
+        request.session["access_token"] = access_token
+        request.session["refresh_token"] = refresh_token
+
+
+
+        # res = Response(
+        #     {
+        #         "message": message,
+        #         "user": UserSerializer(user).data,
+        #         "user_id": user.id,
+        #         "access_token": access_token,
+        #         "refresh_token": refresh_token,
+        #     }, status=status.HTTP_200_OK
+        # )  
+        # return res
         res = {
-            "message": message,
-            "user": UserSerializer(user).data,
-            "user_id": user.id,
-            "access_token": access_token,
-            "refresh_token": refresh_token,
+                "message": message,
+                "user": UserSerializer(user).data,
+                "user_id": user.id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
         }
+        res_json = json.dumps(res)
+        encoded_res = base64.urlsafe_b64encode(res_json.encode()).decode()
 
-        response = Response(res, status=status.HTTP_200_OK)
-        return response
 
+        url = KAKAO_REDIRECT_URI_FE + '?' + urlencode({'user_access':encoded_res})
+        
+        return HttpResponseRedirect(url)
+
+
+
+'''실제 서비스에 쓰일 api, 프론트엔드로 결과값 반환'''
+class KakaoLoginFE(APIView):
+    permission_classes = [AllowAny]
+
+    @extend_schema(exclude=True)
+    def get(self, request):
+        """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
+        client_id = env("KAKAO_REST_API_KEY")
+        redirect_uri = env("KAKAO_REDIRECT_FE")
+        # 로그인 페이지로 이동함
+        uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
+        res = redirect(uri)
+        return res
+
+class KakaoCallbackFE(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = UserSerializer
+    
+    @extend_schema(exclude=True)
+    def get(self, request):
+        """access_token과 회원정보를 요청"""
+        # access_token 요청
+        code = request.GET.get("code")
+        if not code:
+            return Response(
+                {"message": "code가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        request_data = {
+            "grant_type": "authorization_code",
+            "client_id": env("KAKAO_REST_API_KEY"),
+            "redirect_uri": env("KAKAO_REDIRECT_URI"),
+            "client_secret": env("KAKAO_CLIENT_SECRET_KEY"),
+            "code": code,
+        }
+        token_headers = {
+            "Content-type": "application/x-www-form-urlencoded;charset=utf-8"
+        }
+        token_res = requests.post(
+            kakao_token_uri, data=request_data, headers=token_headers
+        )
+
+        token_json = token_res.json()
+        kakao_access_token = token_json.get("access_token")
+
+        if not kakao_access_token:
+            return Response(
+                {"message": "access_token이 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        request.session["kakao_access_token"] = kakao_access_token
+
+        kakao_access_token = f"Bearer {kakao_access_token}"
+
+        # 카카오 회원정보 요청
+        auth_headers = {
+            "Authorization": kakao_access_token,
+            "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+        }
+        user_info_res = requests.post(kakao_user_uri, headers=auth_headers)
+        user_info_json = user_info_res.json()
+
+        social_type = "kakao"
+        social_id = f"{social_type}_{user_info_json.get('id')}"
+
+        kakao_account = user_info_json.get("kakao_account")
+
+        if not kakao_account:
+            return Response(
+                {"message": "카카오 계정이 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user_email = kakao_account.get("email")
+        profile = kakao_account.get("profile")
+
+        user_nickname = profile.get("nickname")
+        user_profile_img = profile.get("profile_image_url")
+
+        user, created = User.objects.get_or_create(
+            social_id=social_id,
+            defaults={
+                "social_type": social_type,
+                "social_id": social_id,
+                "email": user_email,
+                "nickname": user_nickname,
+                "profile_img": user_profile_img,
+            },
+        )
+
+        # 생성된 경우와 기존 사용자인 경우에 따라 다른 메시지 반환
+        if created:
+            message = "사용자 생성 완료"
+        else:
+            message = "로그인 완료"
+
+        # JWT 토큰 생성
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        request.session["access_token"] = access_token
+        request.session["refresh_token"] = refresh_token
+
+
+        res = {
+                "message": message,
+                "user": UserSerializer(user).data,
+                "user_id": user.id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+        }
+        res_json = json.dumps(res)
+        encoded_res = base64.urlsafe_b64encode(res_json.encode()).decode()
+
+
+        url = KAKAO_REDIRECT_URI_FE + '?' + urlencode({'user_access':encoded_res})
+        
+        return HttpResponseRedirect(url)
+        
 
 class KakaoLogout(APIView):
     permission_classes = [AllowAny]
 
-    @extend_schema(
-        tags=["로그인"],
-        summary="카카오 로그아웃",
-        description="oauth/kakao/logout/ 으로 이동하여 로그아웃 합니다.",
-    )
+    @extend_schema(exclude=True)
     def get(self, request):
         """카카오계정과 함께 로그아웃"""
         client_id = env("KAKAO_REST_API_KEY")
-        logout_redirect_uri = env("KAKAO_LOGOUT_REDIRECT_URI")
+        logout_redirect_uri = KAKAO_LOGOUT_REDIRECT_URI_FE
         uri = f"{kakao_logout_uri}?client_id={client_id}&logout_redirect_uri={logout_redirect_uri}"
+
+        response = Response({
+            "message": "Logout success"
+            }, 
+            status=status.HTTP_202_ACCEPTED
+        )
+
         res = redirect(uri)
+        
         return res
 
 
 class KakaoLogoutCallback(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = LogoutSerializer
 
     @extend_schema(exclude=True)
@@ -180,8 +334,8 @@ class KakaoLogoutCallback(APIView):
 
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        return Response(status=status.HTTP_200_OK)
+        
+        # return Response(status=status.HTTP_200_OK)
 
 
 class KakaoUnlink(APIView):
@@ -415,3 +569,23 @@ class UserSearch(APIView):
         users = User.objects.filter(nickname__icontains=nickname).order_by("nickname")
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
+
+class UserInfo(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    """접속중인 사용자 정보 조회"""
+
+    @extend_schema(
+        methods=["GET"],
+        tags=["사용자"],
+        summary="접속중인 사용자 정보 조회",
+        description="사용자 정보를 조회합니다",
+    )
+    def get(self, request):
+        # 사용자 정보 조회
+        user = request.user
+        res = {
+            "user": UserSerializer(user).data,
+            "user_id": user.id,
+        }
+        return Response(res, status=status.HTTP_200_OK)

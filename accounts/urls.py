@@ -6,6 +6,10 @@ from accounts import views
 urlpatterns = [
     path("oauth/kakao/login/", views.KakaoLogin.as_view(), name="kakao_login"),
     path("oauth/kakao/callback/", views.KakaoCallback.as_view(), name="kakao_callback"),
+
+    path("oauth/kakao/login/fe/", views.KakaoLoginFE.as_view(), name="kakao_login_fe"),
+    path('oauth/kakao/callback/fe/', views.KakaoLoginFE.as_view(), name='kakao_callback_fe'),
+
     path("oauth/kakao/logout/", views.KakaoLogout.as_view(), name="kakao_logout"),
     path(
         "oauth/kakao/logout/callback/",
@@ -17,4 +21,7 @@ urlpatterns = [
     path("users/<int:user_id>/following", views.FollowingView.as_view(), name="following"),
     path("users/<int:user_id>/followers", views.FollowerView.as_view(), name="followers"),
     path("users/search", views.UserSearch.as_view(), name="follow"),
+    path("users/info", views.UserInfo.as_view(), name="user_info"),
+    # path('kakao/login/finish/', views.kakaoLoginFinish.as_view(),
+    #     name='kakao_login_todjango'),
 ]
