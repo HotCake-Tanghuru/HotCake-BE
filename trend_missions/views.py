@@ -45,7 +45,9 @@ class PostTrendMissionView(APIView):
         if TrendMission.objects.filter(
             user=user, trend=trend
         ).exists():
-            return Response("이미 생성된 트렌드 미션입니다.", status=404)
+            trendMission = TrendMission.objects.get(user=user, trend=trend)
+            serializer = TrendMissionsSerializer(trendMission)
+            return Response(serializer, status=404)
         
         trendMission = TrendMission.objects.create(
             user=user,
