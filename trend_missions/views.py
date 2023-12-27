@@ -47,7 +47,7 @@ class PostTrendMissionView(APIView):
         ).exists():
             trendMission = TrendMission.objects.get(user=user, trend=trend)
             serializer = TrendMissionsSerializer(trendMission)
-            return Response(serializer, status=404)
+            return Response(serializer.data, status=202)
         
         trendMission = TrendMission.objects.create(
             user=user,
