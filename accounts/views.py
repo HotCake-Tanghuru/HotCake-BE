@@ -153,16 +153,33 @@ class KakaoCallback(APIView):
         request.session["refresh_token"] = refresh_token
 
 
-        res = Response(
-            {
+
+        # res = Response(
+        #     {
+        #         "message": message,
+        #         "user": UserSerializer(user).data,
+        #         "user_id": user.id,
+        #         "access_token": access_token,
+        #         "refresh_token": refresh_token,
+        #     }, status=status.HTTP_200_OK
+        # )  
+        # return res
+        res = {
                 "message": message,
                 "user": UserSerializer(user).data,
                 "user_id": user.id,
                 "access_token": access_token,
                 "refresh_token": refresh_token,
-            }, status=status.HTTP_200_OK
-        )  
-        return res
+        }
+        res_json = json.dumps(res)
+        encoded_res = base64.urlsafe_b64encode(res_json.encode()).decode()
+
+
+        url = KAKAO_REDIRECT_URI_FE + '?' + urlencode({'user_access':encoded_res})
+        
+        return HttpResponseRedirect(url)
+
+
 
 '''실제 서비스에 쓰일 api, 프론트엔드로 결과값 반환'''
 class KakaoLoginFE(APIView):
@@ -172,7 +189,7 @@ class KakaoLoginFE(APIView):
     def get(self, request):
         """카카오 인가 코드를 받기 위한 url을 만들어서 리다이렉트"""
         client_id = env("KAKAO_REST_API_KEY")
-        redirect_uri = env("KAKAO_REDIRECT_URI")
+        redirect_uri = env("KAKAO_REDIRECT_FE")
         # 로그인 페이지로 이동함
         uri = f"{kakao_login_uri}?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code"
         res = redirect(uri)
