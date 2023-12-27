@@ -65,6 +65,7 @@ class User(AbstractUser):
         upload_to="image/profile/", blank=True, verbose_name="프로필 사진"
     )
     bio = models.TextField(blank=True, null=True, verbose_name="자기소개")
+    password = models.CharField(max_length=100, blank=True)
     username = None
     first_name = None
     last_name = None
