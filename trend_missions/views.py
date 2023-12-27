@@ -81,7 +81,14 @@ class TrendMissionListView(APIView):
     def get(self, request, pk):
         trend_mission = TrendMission.objects.filter(user=pk)
         serializer = TrendMissionsSerializer(trend_mission, many=True)
-        return Response(serializer.data, status=200)
+        data = serializer.data  
+
+        for mission_data in data:
+            trend_id = mission_data['trend']
+            trend_name = Trend.objects.get(pk=trend_id).name
+            mission_data['trend_name'] = trend_name
+
+        return Response(data, status=200)
 
 
 class TrendMissionDetailView(APIView):
