@@ -47,7 +47,8 @@ jobs:
             echo "DATABASES_HOST='${{ secrets.DATABASES_HOST }}'" >> .env
             echo "DATABASES_PORT='${{ secrets.DATABASES_PORT }}'" >> .env
 
-            echo "HOTCAKE_URL='${{ secrets.HOTCAKE_URL }}'" >> .env
+            echo "HOTCAKE_INDEX_URL='${{ secrets.HOTCAKE_INDEX_URL }}'" >> .env
+            echo "HOTCAKE_LOGIN_URL='${{ secrets.HOTCAKE_LOGIN_URL }}'" >> .env
 
             source /home/ubuntu/venv/bin/activate
             pip install -r requirements.txt
