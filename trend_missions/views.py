@@ -487,3 +487,40 @@ class TrendMissionLikeView(APIView):
         )
 
         return Response(LikeSerializer(like).data, status=200)
+
+class RandomTrendMissionView(APIView):
+    """랜덤 트렌드 미션 조회"""
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드 미션"],
+        summary="랜덤 트렌드 미션 조회",
+        description="랜덤 트렌드 미션을 조회합니다.",
+    )
+    def get(self, request):
+        # 트렌드 미션 존재 여부 확인
+        if not TrendMission.objects.exists():
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+        # 랜덤 트렌드 미션 조회
+        trend_mission = TrendMission.objects.order_by("?").first()
+        serializer = TrendMissionsSerializer(trend_mission)
+
+        result = serializer.data
+
+        # 트렌드 미션에 해당하는 유저 이름도 추가
+        user_id = trend_mission.user.id
+        user_nickname = User.objects.get(pk=user_id).nickname
+        result["user_nickname"] = user_nickname
+
+        # 트렌드 이름도 추가
+        trend_id = trend_mission.trend.id
+        trend_name = Trend.objects.get(pk=trend_id).name
+        result["trend_name"] = trend_name
+
+        # 트렌드 아이템 리스트도 추가
+        trend_item_list = UserTrendItem.objects.filter(trend_mission=trend_mission.id)
+        result["trend_item_list"] = UserTrendItemSerializer(
+            trend_item_list, many=True
+        ).data
+
+
+        return Response(result, status=200)

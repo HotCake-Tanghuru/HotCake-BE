@@ -37,4 +37,7 @@ urlpatterns = [
         views.TrendMissionLikeView.as_view(),
         name="trend_mission_like",
     ),
+    path(
+        "random/", views.RandomTrendMissionView.as_view(), name="random_trend_mission"
+    )
 ]
