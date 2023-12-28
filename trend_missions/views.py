@@ -118,11 +118,11 @@ class TrendMissionDetailView(APIView):
             user_trend_item_list, many=True
         ).data
 
-        # result에 트렌드 이름도 추가
+        # result에 트렌드 아이템 이름도 추가
         for item_data in result['trend_item_list']:
             trend_id = item_data['trend_item']
-            trend_name = Trend.objects.get(pk=trend_id).name
-            item_data['trend_name'] = trend_name
+            trend_item_name = TrendItem.objects.get(pk=trend_id).title
+            item_data['trend_item_name'] = trend_item_name
 
 
         # 댓글 데이터 조회
