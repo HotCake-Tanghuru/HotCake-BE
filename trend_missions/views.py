@@ -157,6 +157,20 @@ class TrendMissionItemUpdateView(APIView):
         serializer = UserTrendItemUpdateSerializer(item, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            
+            # 같은 트렌드의 다른 아이템들도 모두 인증되었는지 확인
+            trend_mission = item.trend_mission
+            trend_item_list = UserTrendItem.objects.filter(trend_mission=trend_mission)
+
+            for trend_item in trend_item_list: # 하나라도 아직 인증되지 않았다면 스탬프 발급 X
+                if trend_item.is_certificated == False:
+                    return Response(serializer.data, status=200)
+            
+            # 모두 다 인증되었다면, 트렌드 미션 상태값 변경 -> True
+            trend_mission.is_all_certificated = True
+            serializer = TrendMissionsSerializer(trend_mission)
+            serializer.updateComplete(trend_mission)
+
             return Response(serializer.data, status=200)
 
 
@@ -175,18 +189,9 @@ class CheckMissionCompleteView(APIView):
         trend_mission = TrendMission.objects.get(pk=pk)
         user = request.user
 
-        # 해당하는 트렌드 미션 아이템 목록 찾기
-        trend_item_list = UserTrendItem.objects.filter(trend_mission=pk, user=user)
-
-        # 모든 미션 완수 여부 확인 (인증 여부 확인)
-        for trend_item in trend_item_list:
-            if trend_item.is_certificated == False:
-                return Response("아직 모든 미션을 완료하지 않았습니다.", status=202)
-
-        # 트렌드 미션 상태값 변경 -> True
-        trend_mission.is_all_certificated = True
-        serializer = TrendMissionsSerializer(trend_mission)
-        serializer.updateComplete(trend_mission)
+        # 트렌드 미션 모두 인증했는지 확인
+        if trend_mission.is_all_certificated == False:
+            return Response("아직 모든 미션을 완료하지 않았습니다.", status=202)
 
         # 스탬프 발급
         if Stamp.objects.filter(user=user, trend_mission=trend_mission).exists():
@@ -196,6 +201,7 @@ class CheckMissionCompleteView(APIView):
             user=user,
             trend_mission=trend_mission,
         )
+        serializer = StampSerializer(stamp)
 
         return Response(serializer.data, status=200)
 
