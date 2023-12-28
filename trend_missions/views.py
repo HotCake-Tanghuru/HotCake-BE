@@ -127,8 +127,13 @@ class TrendMissionDetailView(APIView):
 
         # 댓글 데이터 조회
         comment_list = Comment.objects.filter(trend_mission=pk)
+        # 댓글에 작성자 닉네임도 추가 
         result["comment_list"] = CommentSerializer(comment_list, many=True).data
-
+        for comment_data in result['comment_list']:
+            user_id = comment_data['user']
+            user_nickname = User.objects.get(pk=user_id).nickname
+            comment_data['user_nickname'] = user_nickname
+            
         # 좋아요 데이터 조회
         like_list = Like.objects.filter(trend_mission=pk)
         result["like_list"] = LikeSerializer(like_list, many=True).data
