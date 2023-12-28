@@ -133,21 +133,42 @@ class TrendMissionDetailView(APIView):
             user_id = comment_data['user']
             user_nickname = User.objects.get(pk=user_id).nickname
             comment_data['user_nickname'] = user_nickname
-            
+
         # 좋아요 데이터 조회
         like_list = Like.objects.filter(trend_mission=pk)
         result["like_list"] = LikeSerializer(like_list, many=True).data
 
         return Response(result, status=200)
 
+class TrendMissionItemDetailView(APIView):
+    """트렌드 아이템 상세 조회""" 
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드 미션"],
+        summary="사용자 미션 아이템 상세 조회",
+        description="미션 아이템 상세 조회 페이지입니다. 미션 아이템의 id를 넣어주세요.",
+    )
+    def get(self, request, pk):
+        # 트렌드 아이템 존재 여부 확인
+        if not UserTrendItem.objects.filter(pk=pk).exists():
+            return Response("존재하지 않는 트렌드 아이템입니다.", status=404)
+        trend_item = UserTrendItem.objects.get(pk=pk)
+        serializer = UserTrendItemSerializer(trend_item)
+        
+        # 트렌드 아이템 이름도 같이 반환
+        trend_item_name = TrendItem.objects.get(pk=trend_item.trend_item.id).title
+        result = serializer.data
+        result["trend_item_name"] = trend_item_name
+        return Response(result, status=200)
+    
 
 class TrendMissionItemUpdateView(APIView):
     """트렌드 아이템 수정"""
     @extend_schema(
         methods=["PATCH"],
         tags=["트렌드 미션"],
-        summary="트렌드 미션 아이템 수정",
-        description="트렌드 미션 아이템을 수정합니다. 이미지, 내용을 수정 가능합니다. id에는 트렌드 아이템의 id를 넣어주세요. multipart/form-data 형태로 테스트해주세요.",
+        summary="사용자 미션 아이템 수정",
+        description="미션 아이템을 수정합니다. 이미지, 내용을 수정 가능합니다. id에는 사용자의 트렌드 아이템의 id를 넣어주세요. multipart/form-data 형태로 테스트해주세요.",
         request=UserTrendItemUpdateSerializer,
     )
     def patch(self, request, pk):

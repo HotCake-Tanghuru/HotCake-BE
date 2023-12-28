@@ -14,6 +14,7 @@ urlpatterns = [
         views.TrendMissionItemUpdateView.as_view(),
         name="trend_mission_item_update",
     ),
+    path("mission-item/<int:pk>", views.TrendMissionItemDetailView.as_view()),
     path(
         "<int:pk>/complete",
         views.CheckMissionCompleteView.as_view(),
