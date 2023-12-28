@@ -133,6 +133,7 @@ class TrendMissionDetailView(APIView):
             user_id = comment_data['user']
             user_nickname = User.objects.get(pk=user_id).nickname
             comment_data['user_nickname'] = user_nickname
+        # 댓글에 댓글 id도 추가
 
         # 좋아요 데이터 조회
         like_list = Like.objects.filter(trend_mission=pk)
