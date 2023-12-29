@@ -29,6 +29,8 @@
 
 <a href="http://team-hotcake.s3-website.ap-northeast-2.amazonaws.com/">🔗핫케이크 바로가기</a>
 
+[swagger](http://43.202.230.2/api/schema/swagger-ui/#/)
+
 ```
 저희 팀은 트렌드에 민감한 젊은 층을 겨냥하여 핫 트렌드에 관한 정보를 제공하는 SNS 서비스를 제작하였습니다.
 
