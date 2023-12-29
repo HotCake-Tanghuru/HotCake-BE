@@ -419,6 +419,9 @@ G. 트렌드 미션 페이지 상세 조회
 |![트렌드 미션 좋아요](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/acff9700-3dc4-4fbd-93a4-0cc26328b95d)<br>스탬프 발급|![스탬프 조회](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/f63b36a8-d94c-4a66-bde0-36ae98c04202)<br>스탬프 조회|
 |![스탬프 상세](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/b207bb4d-c21d-4153-b3c9-9f0f359f187e)<br>스탬프 상세 조회||
 
+ <img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/9ee99b68-8ba2-47d1-803d-256c451c7e3f" width="80%"> 
+
+
 <br>
 
 - 트렌드 미션 아이템을 모두 인증했다면 스탬프를 발급 받을 수 있습니다.
@@ -426,6 +429,8 @@ G. 트렌드 미션 페이지 상세 조회
 - 지금까지 받은 스탬프는 프로필에서 확인할 수 있습니다. 
 
 - 발급 받은 스탬프를 클릭하면 해당 스탬프를 발급 받은 인증 아이템과 날짜를 확인할 수 있고 [더보기]를 통해 트렌드 미션 페이지로 이동할 수 있습니다.
+
+- [스탬프 공유하기]를 누르면 내 스탬프의 이미지가 자동으로 저장됩니다.
 
 <br>
 
