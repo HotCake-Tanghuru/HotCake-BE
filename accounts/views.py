@@ -568,6 +568,10 @@ class UserSearch(APIView):
         nickname = request.query_params.get("nickname")
         users = User.objects.filter(nickname__icontains=nickname).order_by("nickname")
         serializer = UserSerializer(users, many=True)
+
+        # user의 id도 반환
+        for data in serializer.data:
+            data["user_id"] = User.objects.get(nickname=data["nickname"]).id
         return Response(serializer.data)
 
 class UserInfo(APIView):

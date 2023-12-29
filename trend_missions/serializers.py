@@ -51,13 +51,14 @@ class UserTrendItemUpdateSerializer(serializers.ModelSerializer):
 class StampSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stamp
-        fields = ["user", "trend_mission", "created_at"]
+        fields = ["id", "user", "trend_mission", "created_at"]
 
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = [
+            "id",
             "user",
             "trend_mission",
             "content",

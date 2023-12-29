@@ -45,7 +45,9 @@ class PostTrendMissionView(APIView):
         if TrendMission.objects.filter(
             user=user, trend=trend
         ).exists():
-            return Response("이미 생성된 트렌드 미션입니다.", status=404)
+            trendMission = TrendMission.objects.get(user=user, trend=trend)
+            serializer = TrendMissionsSerializer(trendMission)
+            return Response(serializer.data, status=202)
         
         trendMission = TrendMission.objects.create(
             user=user,
@@ -81,7 +83,14 @@ class TrendMissionListView(APIView):
     def get(self, request, pk):
         trend_mission = TrendMission.objects.filter(user=pk)
         serializer = TrendMissionsSerializer(trend_mission, many=True)
-        return Response(serializer.data, status=200)
+        data = serializer.data  
+
+        for mission_data in data:
+            trend_id = mission_data['trend']
+            trend_name = Trend.objects.get(pk=trend_id).name
+            mission_data['trend_name'] = trend_name
+
+        return Response(data, status=200)
 
 
 class TrendMissionDetailView(APIView):
@@ -109,9 +118,22 @@ class TrendMissionDetailView(APIView):
             user_trend_item_list, many=True
         ).data
 
+        # result에 트렌드 아이템 이름도 추가
+        for item_data in result['trend_item_list']:
+            trend_id = item_data['trend_item']
+            trend_item_name = TrendItem.objects.get(pk=trend_id).title
+            item_data['trend_item_name'] = trend_item_name
+
+
         # 댓글 데이터 조회
         comment_list = Comment.objects.filter(trend_mission=pk)
+        # 댓글에 작성자 닉네임도 추가 
         result["comment_list"] = CommentSerializer(comment_list, many=True).data
+        for comment_data in result['comment_list']:
+            user_id = comment_data['user']
+            user_nickname = User.objects.get(pk=user_id).nickname
+            comment_data['user_nickname'] = user_nickname
+        # 댓글에 댓글 id도 추가
 
         # 좋아요 데이터 조회
         like_list = Like.objects.filter(trend_mission=pk)
@@ -119,14 +141,35 @@ class TrendMissionDetailView(APIView):
 
         return Response(result, status=200)
 
+class TrendMissionItemDetailView(APIView):
+    """트렌드 아이템 상세 조회""" 
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드 미션"],
+        summary="사용자 미션 아이템 상세 조회",
+        description="미션 아이템 상세 조회 페이지입니다. 미션 아이템의 id를 넣어주세요.",
+    )
+    def get(self, request, pk):
+        # 트렌드 아이템 존재 여부 확인
+        if not UserTrendItem.objects.filter(pk=pk).exists():
+            return Response("존재하지 않는 트렌드 아이템입니다.", status=404)
+        trend_item = UserTrendItem.objects.get(pk=pk)
+        serializer = UserTrendItemSerializer(trend_item)
+        
+        # 트렌드 아이템 이름도 같이 반환
+        trend_item_name = TrendItem.objects.get(pk=trend_item.trend_item.id).title
+        result = serializer.data
+        result["trend_item_name"] = trend_item_name
+        return Response(result, status=200)
+    
 
 class TrendMissionItemUpdateView(APIView):
     """트렌드 아이템 수정"""
     @extend_schema(
         methods=["PATCH"],
         tags=["트렌드 미션"],
-        summary="트렌드 미션 아이템 수정",
-        description="트렌드 미션 아이템을 수정합니다. 이미지, 내용을 수정 가능합니다. id에는 트렌드 아이템의 id를 넣어주세요. multipart/form-data 형태로 테스트해주세요.",
+        summary="사용자 미션 아이템 수정",
+        description="미션 아이템을 수정합니다. 이미지, 내용을 수정 가능합니다. id에는 사용자의 트렌드 아이템의 id를 넣어주세요. multipart/form-data 형태로 테스트해주세요.",
         request=UserTrendItemUpdateSerializer,
     )
     def patch(self, request, pk):
@@ -141,6 +184,20 @@ class TrendMissionItemUpdateView(APIView):
         serializer = UserTrendItemUpdateSerializer(item, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            
+            # 같은 트렌드의 다른 아이템들도 모두 인증되었는지 확인
+            trend_mission = item.trend_mission
+            trend_item_list = UserTrendItem.objects.filter(trend_mission=trend_mission)
+
+            for trend_item in trend_item_list: # 하나라도 아직 인증되지 않았다면 스탬프 발급 X
+                if trend_item.is_certificated == False:
+                    return Response(serializer.data, status=200)
+            
+            # 모두 다 인증되었다면, 트렌드 미션 상태값 변경 -> True
+            trend_mission.is_all_certificated = True
+            serializer = TrendMissionsSerializer(trend_mission)
+            serializer.updateComplete(trend_mission)
+
             return Response(serializer.data, status=200)
 
 
@@ -159,18 +216,9 @@ class CheckMissionCompleteView(APIView):
         trend_mission = TrendMission.objects.get(pk=pk)
         user = request.user
 
-        # 해당하는 트렌드 미션 아이템 목록 찾기
-        trend_item_list = UserTrendItem.objects.filter(trend_mission=pk, user=user)
-
-        # 모든 미션 완수 여부 확인 (인증 여부 확인)
-        for trend_item in trend_item_list:
-            if trend_item.is_certificated == False:
-                return Response("아직 모든 미션을 완료하지 않았습니다.", status=202)
-
-        # 트렌드 미션 상태값 변경 -> True
-        trend_mission.is_all_certificated = True
-        serializer = TrendMissionsSerializer(trend_mission)
-        serializer.updateComplete(trend_mission)
+        # 트렌드 미션 모두 인증했는지 확인
+        if trend_mission.is_all_certificated == False:
+            return Response("아직 모든 미션을 완료하지 않았습니다.", status=202)
 
         # 스탬프 발급
         if Stamp.objects.filter(user=user, trend_mission=trend_mission).exists():
@@ -180,6 +228,7 @@ class CheckMissionCompleteView(APIView):
             user=user,
             trend_mission=trend_mission,
         )
+        serializer = StampSerializer(stamp)
 
         return Response(serializer.data, status=200)
 
@@ -438,3 +487,40 @@ class TrendMissionLikeView(APIView):
         )
 
         return Response(LikeSerializer(like).data, status=200)
+
+class RandomTrendMissionView(APIView):
+    """랜덤 트렌드 미션 조회"""
+    @extend_schema(
+        methods=["GET"],
+        tags=["트렌드 미션"],
+        summary="랜덤 트렌드 미션 조회",
+        description="랜덤 트렌드 미션을 조회합니다.",
+    )
+    def get(self, request):
+        # 트렌드 미션 존재 여부 확인
+        if not TrendMission.objects.exists():
+            return Response("존재하지 않는 트렌드 미션입니다.", status=404)
+        # 랜덤 트렌드 미션 조회
+        trend_mission = TrendMission.objects.order_by("?").first()
+        serializer = TrendMissionsSerializer(trend_mission)
+
+        result = serializer.data
+
+        # 트렌드 미션에 해당하는 유저 이름도 추가
+        user_id = trend_mission.user.id
+        user_nickname = User.objects.get(pk=user_id).nickname
+        result["user_nickname"] = user_nickname
+
+        # 트렌드 이름도 추가
+        trend_id = trend_mission.trend.id
+        trend_name = Trend.objects.get(pk=trend_id).name
+        result["trend_name"] = trend_name
+
+        # 트렌드 아이템 리스트도 추가
+        trend_item_list = UserTrendItem.objects.filter(trend_mission=trend_mission.id)
+        result["trend_item_list"] = UserTrendItemSerializer(
+            trend_item_list, many=True
+        ).data
+
+
+        return Response(result, status=200)
