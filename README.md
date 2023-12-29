@@ -52,13 +52,14 @@
 
 ## 2. 🧑팀 소개
  #### 안녕하세요. Team Tanghuru입니다!
- |고동우   |김나영   |박정현   | 이수빈   |
+|고동우   |김나영   |박정현   | 이수빈   |
 |:---------:|:---------:|:---------:|:---------:|
-|<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/ecb7a1ef-dcc3-46bd-a7a1-490d0941313b">|<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/4e42f092-04f8-453c-959b-d83adda8d9b5"> |<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/3eeb909d-d323-4326-898a-0b29cfdd83be"> |<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/6a7a0f65-7f08-4be6-a711-7b01104eb294"> |
-|<a href="https://github.com/Ko-udon">🔗Ko-udon</a>|<a href="https://github.com/nayeongdev">🔗nayeongdev</a>|<a href="https://github.com/jungloopy">🔗jungloopy</a>|<a href="https://github.com/hantang820">🔗hantang820</a>|
+|<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/a05d6f23-c3b7-48a5-a2e8-2b4b191d46d7" width="180">|<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/4e42f092-04f8-453c-959b-d83adda8d9b5" width="150"> |<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/3eeb909d-d323-4326-898a-0b29cfdd83be" width="150"> |<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/9858822d-5ab9-4b1c-9f33-14856685627a" width="150"> |
+|<a href="https://github.com/Ko-udon" >🔗Ko-udon</a>|<a href="https://github.com/nayeongdev">🔗nayeongdev</a>|<a href="https://github.com/jungloopy">🔗jungloopy</a>|<a href="https://github.com/hantang820">🔗hantang820</a>|
+
 
  
-<img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/1dbb6c19-2b0e-40f3-9efc-1254198d8a65"> 
+![20231229_122313](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/72a29212-c3f4-486f-b7d1-759c92122285)
 
 
 ## 3. 🧐개발 스택 및 개발 일정(WBS)
@@ -105,7 +106,7 @@
 
 <img src="https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385695/3d31bd1c-be24-4320-a04e-d9b4149fb4d9" width="80%"> 
 
-- [기획] 주제 선명 및 기획·화면 설계<br>
+- [기획] 주제 선정 및 기획·화면 설계<br>
  2023-12-08 ~ 2023-12-12
 
 - [개발]<br>
@@ -335,6 +336,28 @@
 
 - 로그아웃 시 서비스에서만 로그아웃/카카오 계정과 함께 로그아웃 중 선택할 수 있습니다.
 
+- 로그인
+  
+  [구조]
+  1. 백엔드에서 oauth/kakao/login/ 요청에 대해 카카오 로그인 페이지로 리다이렉트
+  2. 사용자 로그인 완료
+  3. 카카오 서버가 oauth/kakao/login/로 리다이렉트
+  4. 회원가입 or 로그인이 되며 JWT 생성
+
+- 로그인
+
+  [구조]
+  1. 백엔드에서 oauth/kakao/logout/ 요청에 대해 카카오 로그아웃 페이지로 리다이렉트
+  2. 사용자 로그아웃 완료
+  3. 카카오 서버가 oauth/kakao/logout/callback/로 리다이렉트
+  4. 로그아웃 되며 JWT 토큰을 블랙리스트에 추가
+
+- 회원가입
+
+  [구조]
+  1. 백엔드에서  oauth/kakao/unlink/ 요청이 오면 카카오계정과 함께 회원탈퇴
+  2. 카카오 연결끊기 요청 후 user에서 delete
+
 <br>
 
 ### 2. 사용자 관련
@@ -360,7 +383,6 @@
 <br>
 
 ### 3. 트렌드
-## 트렌드 상세 조회
 | | |
 |:-:|:-:|
 |![핫 트렌드 페이지 조회](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/cd4ba3a4-3dbe-4db1-b695-88062e613fc6)<br>핫 트렌드 페이지 조회|![친구 프로필](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/b31fbd3c-abc8-4d67-94c6-69891b36e7c3)<br>다른 유저 프로필 조회|
@@ -385,11 +407,6 @@
 
 ### 4. 트렌드 미션
 
-
-
-F. 트렌드 미션 페이지 좋아요 등록·취소
-G. 트렌드 미션 페이지 상세 조회
-
 | | |
 |:-:|:-:|
 |![사용자의 트렌드 미션 리스트 조회](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/b6a25df3-81ac-4f4d-bd99-f0ff1146c853)<br>사용자 트렌드 미션 리스트 조회|![트렌드 상세 조회](https://github.com/HotCake-Tanghuru/HotCake-BE/assets/142385528/6f16999c-4d33-40a3-98e0-9826f0a7b897)<br>트렌드 미션 생성|
@@ -411,8 +428,6 @@ G. 트렌드 미션 페이지 상세 조회
 <br>
 
 ### 5. 스탬프
-
-#### A. 스탬프 발급
 
 | | |
 |:-:|:-:|
@@ -439,7 +454,8 @@ G. 트렌드 미션 페이지 상세 조회
 - 문제점
   - Django에서 Many-to-Many 관계를 다룰 때 발생할 수 있는 에러
   - TDD(Test-Driven Development) 관련 에러
-  - 이 에러는 Django의 테스트 코드에서 Many-to-Many 관계에 대한 set() 메서드를 사용했을 때 발생할 수 있습니다. Django의 Many-to-Many 관계를 설정할 때는 set() 대신에 add(), remove(), clear()와 같은 메서드를 사용해야 한다고 합니다.
+  - 이 에러는 Django의 테스트 코드에서 Many-to-Many 관계에 대한 set() 메서드를 사용했을 때 발생할 수 있습니다. 
+  - Django의 Many-to-Many 관계를 설정할 때는 set() 대신에 add(), remove(), clear()와 같은 메서드를 사용해야 한다고 합니다.
 - 해결
   - 테스트 코드에서 set() 부분을 add()로 수정하였고 테스트 작동에 성공했습니다.
 
